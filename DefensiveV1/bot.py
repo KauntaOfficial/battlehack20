@@ -73,27 +73,52 @@ def turn():
         # If you're white, want to go down a lane without any of your pawns not next to one already populated, if populated
         # then you want to just fill a row you already have
         if team == Team.WHITE:
-            index = 0
+            vert = 0
+            # Tracks the base of the opponent
+            opp = board_size - 1
+            white = True
         else:
-            index = board_size - 1
+            vert = board_size - 1
+            opp = 0
+            white = False
 
-        # Don't spawn if you already win a lane
-        # Counter spawn
-        board_state = get_board()
+        boardState = get_board()
         for i in range(0, 15):
-            for j in range(0, 15, 2):
-                if board_state[i][j] == Team.WHITE:
+            for j in range(0, 15):
+                if boardState[i][j] == Team.WHITE:
                     dlog("WHITE ")
-                elif board_state[i][j] == Team.BLACK:
+                elif boardState[i][j] == Team.BLACK:
                     dlog("BLACK ")
                 else :
                     dlog("NONE ")
             dlog("\n")
 
+        # In the case that we are white, there will be one turn where there are no black spawns. This accounts for that.
+        isOppRowEmpty = True
+        for i in range(0,15):
+            if boardState(opp, i) == Team.BLACK:
+                isOppRowEmpty = False
+
+        if isOppRowEmpty:
+            spawn(vert, random.randint(7,8))
+        elif white == False:
+            oppPlacedColumn = 0
+            for i in range(0, 15):
+                if boardState[opp][i] == Team.WHITE:
+                    oppPlacedColumn = i
+                    break
+            spawn(vert, oppPlacedColumn)
+        elif white:
+            pass
+            ## make white more aggressive?
+            
+
+        
+
         for _ in range(board_size):
             i = random.randint(0, board_size - 1)
             if not check_space(index, i):
-                spawn(index, i)
+                spawn(vert, i)
                 dlog('Spawned unit at: (' + str(index) + ', ' + str(i) + ')')
                 break
 
