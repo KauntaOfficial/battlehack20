@@ -44,6 +44,7 @@ def turn():
         else:
             forward = -1
 
+        # Add smart pawn moves
         pawns = sense()
 
         # try catpuring pieces
@@ -67,12 +68,12 @@ def turn():
         else:
             index = board_size - 1
 
-        for _ in range(board_size):
-            i = random.randint(0, board_size - 1)
-            if not check_space(index, i):
-                spawn(index, i)
-                dlog('Spawned unit at: (' + str(index) + ', ' + str(i) + ')')
-                break
+        # for _ in range(board_size):
+        #     i = random.randint(0, board_size - 1)
+        #     if not check_space(index, i):
+        #         spawn(index, i)
+        #         dlog('Spawned unit at: (' + str(index) + ', ' + str(i) + ')')
+        #         break
 
     bytecode = get_bytecode()
     dlog('Done! Bytecode left: ' + str(bytecode))

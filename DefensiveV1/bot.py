@@ -8,6 +8,8 @@ from battlehack20.stubs import *
 # try and sneak some pawns down the side when the middle is locked up.
 
 DEBUG = 1
+
+
 def dlog(str):
     if DEBUG > 0:
         log(str)
@@ -22,24 +24,25 @@ def check_space_wrapper(r, c, board_size):
     except:
         return None
 
+
 def turn():
     """
     MUST be defined for robot to run
     This function will be called at the beginning of every turn and should contain the bulk of your robot commands
     """
-    dlog('Starting Turn!')
+    # dlog('Starting Turn!')
     board_size = get_board_size()
 
     team = get_team()
     opp_team = Team.WHITE if team == Team.BLACK else team.BLACK
-    dlog('Team: ' + str(team))
+    # dlog('Team: ' + str(team))
 
     robottype = get_type()
-    dlog('Type: ' + str(robottype))
+    # dlog('Type: ' + str(robottype))
 
     if robottype == RobotType.PAWN:
         row, col = get_location()
-        dlog('My location is: ' + str(row) + ' ' + str(col))
+        # dlog('My location is: ' + str(row) + ' ' + str(col))
 
         if team == Team.WHITE:
             forward = 1
@@ -49,23 +52,24 @@ def turn():
         # Pawn always wants to capture unless it has can establish control through pushing forward
         # The main strategy here will just be when is not taking a better idea.
 
-        #if not row % 2 and not check_space_wrapper(row + (forward * 2), col + 1, board_size) and not check_space_wrapper(row + (forward * 2), col - 1, board_size) and row + forward != -1 and row + forward != board_size and not check_space_wrapper(row + forward, col, board_size):
+        # if not row % 2 and not check_space_wrapper(row + (forward * 2), col + 1, board_size) and not check_space_wrapper(row + (forward * 2), col - 1, board_size) and row + forward != -1 and row + forward != board_size and not check_space_wrapper(row + forward, col, board_size):
         #    move_forward()
         #    dlog('Pushed Forward')
         # try capturing pieces
-        if check_space_wrapper(row + forward, col + 1, board_size) == opp_team: # up and right
+        if check_space_wrapper(row + forward, col + 1, board_size) == opp_team:  # up and right
             capture(row + forward, col + 1)
-            dlog('Captured at: (' + str(row + forward) + ', ' + str(col + 1) + ')')
+            # dlog('Captured at: (' + str(row + forward) + ', ' + str(col + 1) + ')')
 
-        elif check_space_wrapper(row + forward, col - 1, board_size) == opp_team: # up and left
+        elif check_space_wrapper(row + forward, col - 1, board_size) == opp_team:  # up and left
             capture(row + forward, col - 1)
-            dlog('Captured at: (' + str(row + forward) + ', ' + str(col - 1) + ')')
+            # dlog('Captured at: (' + str(row + forward) + ', ' + str(col - 1) + ')')
 
         # otherwise try to move forward
-        elif row + forward != -1 and row + forward != board_size and not check_space_wrapper(row + forward, col, board_size):
+        elif row + forward != -1 and row + forward != board_size and not check_space_wrapper(row + forward, col,
+                                                                                             board_size):
             #               ^  not off the board    ^            and    ^ directly forward is empty
             move_forward()
-            dlog('Moved forward!')
+            # dlog('Moved forward!')
 
     else:
         # Where do we want to spawn the pawns? Center > Edges since you cover two spaces
@@ -82,46 +86,71 @@ def turn():
             opp = 0
             white = False
 
-        boardState = get_board()
-        for i in range(0, 15):
-            for j in range(0, 15):
-                if boardState[i][j] == Team.WHITE:
-                    dlog("WHITE ")
-                elif boardState[i][j] == Team.BLACK:
-                    dlog("BLACK ")
-                else :
-                    dlog("NONE ")
-            dlog("\n")
+        # Optimizations:
+        # - Don't place if row is won
+        # - Don't place if row is gridlocked and rows next are won
+        if team == Team.WHITE:
+            forward = 1
+        else:
+            forward = -1
 
-        # In the case that we are white, there will be one turn where there are no black spawns. This accounts for that.
-        isOppRowEmpty = True
-        for i in range(0,15):
-            if boardState(opp, i) == Team.BLACK:
-                isOppRowEmpty = False
+        col_to_place = -1
+        for col in range(0, 15):
+            if not check_space(vert, col) and not check_space(opp, col) == team:
+                if col > 0 and check_space(vert + forward, col - 1) == opp_team:
+                    continue
+                if col < 15 and check_space(vert + forward, col + 1) == opp_team:
+                    continue
 
-        if isOppRowEmpty:
-            spawn(vert, random.randint(7,8))
-        elif white == False:
-            oppPlacedColumn = 0
-            for i in range(0, 15):
-                if boardState[opp][i] == Team.WHITE:
-                    oppPlacedColumn = i
-                    break
-            spawn(vert, oppPlacedColumn)
-        elif white:
-            pass
-            ## make white more aggressive?
-            
-
-        
-
-        for _ in range(board_size):
-            i = random.randint(0, board_size - 1)
-            if not check_space(index, i):
-                spawn(vert, i)
-                dlog('Spawned unit at: (' + str(index) + ', ' + str(i) + ')')
+                col_to_place = col
                 break
 
-    bytecode = get_bytecode()
-    dlog('Done! Bytecode left: ' + str(bytecode))
+        if col_to_place == -1:
+            for col in range(0, 15):
+                if not check_space(vert, col):
+                    col_to_place = col
+                    break
 
+        diff = 0
+        for row in range(0, 15):
+            if check_space(row, col_to_place) == opp_team:
+                diff -= 1
+            elif check_space(row, col_to_place) == team:
+                diff += 1
+
+        for col in range(0, 15):
+            if check_space(opp, col) == team:
+                continue
+
+            opp_count = 0
+            your_count = 0
+
+            for row in range(0, 15):
+                if check_space(row, col) == opp_team:
+                    opp_count += 1
+                elif check_space(row, col) == team:
+                    your_count += 1
+
+            if 0 < col < 15:
+                if check_space(opp, col - 1) == team and check_space(opp, col + 1) == team:
+                    if your_count == 0:
+                        col_to_place = col
+                        break
+                    else:
+                        continue
+
+            if your_count - opp_count < diff and not check_space(vert, col):
+                col_to_place = col
+                diff = your_count - opp_count
+
+        spawn(vert, col_to_place)
+
+        # for _ in range(board_size):
+        #    i = random.randint(0, board_size - 1)
+        #    if not check_space(index, i):
+        #        spawn(vert, i)
+        #        dlog('Spawned unit at: (' + str(index) + ', ' + str(i) + ')')
+        #        break
+
+    bytecode = get_bytecode()
+    # dlog('Done! Bytecode left: ' + str(bytecode))
