@@ -2,10 +2,8 @@ import random
 
 from battlehack20.stubs import *
 
-# Strategy
-# Note that an alternate condition if you can't win by N / 2, is just number of pawns. If you can greedy and decide
-# when to push instead of eat, then you can defend and win. Also could be interesting strategy to
-# try and sneak some pawns down the side when the middle is locked up.
+# This is an example bot written by the developers!
+# Use this to help write your own code, or run it against your bot to see how well you can do!
 
 DEBUG = 1
 def dlog(str):
@@ -46,13 +44,9 @@ def turn():
         else:
             forward = -1
 
-        # Pawn always wants to capture unless it has can establish control through pushing forward
-        # The main strategy here will just be when is not taking a better idea.
+        pawns = sense()
 
-        #if not row % 2 and not check_space_wrapper(row + (forward * 2), col + 1, board_size) and not check_space_wrapper(row + (forward * 2), col - 1, board_size) and row + forward != -1 and row + forward != board_size and not check_space_wrapper(row + forward, col, board_size):
-        #    move_forward()
-        #    dlog('Pushed Forward')
-        # try capturing pieces
+        # try catpuring pieces
         if check_space_wrapper(row + forward, col + 1, board_size) == opp_team: # up and right
             capture(row + forward, col + 1)
             dlog('Captured at: (' + str(row + forward) + ', ' + str(col + 1) + ')')
@@ -68,27 +62,10 @@ def turn():
             dlog('Moved forward!')
 
     else:
-        # Where do we want to spawn the pawns? Center > Edges since you cover two spaces
-        # Maybe check to see where the opponent spawned as black and then counter?
-        # If you're white, want to go down a lane without any of your pawns not next to one already populated, if populated
-        # then you want to just fill a row you already have
         if team == Team.WHITE:
             index = 0
         else:
             index = board_size - 1
-
-        # Don't spawn if you already win a lane
-        # Counter spawn
-        board_state = get_board()
-        for i in range(0, 15):
-            for j in range(0, 15, 2):
-                if board_state[i][j] == Team.WHITE:
-                    dlog("WHITE ")
-                elif board_state[i][j] == Team.BLACK:
-                    dlog("BLACK ")
-                else :
-                    dlog("NONE ")
-            dlog("\n")
 
         for _ in range(board_size):
             i = random.randint(0, board_size - 1)
