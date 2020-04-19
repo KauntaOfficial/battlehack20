@@ -184,6 +184,7 @@ def turn():
                 elif check_space(row, col) == team:
                     your_count += 1
 
+            # Checks to make sure there aren't any breakaway pawns
             priority = True
             for row in range(1, 15):
                 if check_space(row, col) == team:
@@ -228,6 +229,7 @@ def turn():
                 col_to_place = test_col
                 min_in_row = in_row
 
+        # If you find a priority lane with uncontested pawns, challenge it.
         if priority_lane != -1:
             spawn(vert, priority_lane)
         elif 0 <= col_to_place <= 15 and not check_space(vert, col_to_place):
