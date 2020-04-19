@@ -143,7 +143,11 @@ def turn():
 
             if your_count - opp_count < -5:
                 continue
-            if your_count - opp_count <= diff and not check_space(vert, col):
+
+            if your_count == 0 and opp_count != 0 and not check_space(vert, col):
+                col_to_place = col
+                diff = -100
+            elif your_count - opp_count <= diff and not check_space(vert, col):
                 col_to_place = col
                 diff = your_count - opp_count
 
@@ -152,6 +156,7 @@ def turn():
         in_row = -1
         push_option = False
         aggressive_option = -1
+        aggressive_fill = 17
 
         if diff > -1:
             for col in range(0, 15):
