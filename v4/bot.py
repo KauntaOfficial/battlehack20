@@ -203,6 +203,27 @@ def turn():
 
         # dlog("Chosen: " + str(col_to_place))
         # TODO: Change to also evaluate the adjacent columns because they all contrib and spreading out troops is beneficial
+        min_in_row = 0
+        for i in range(0, board_size):
+            if check_space_wrapper(i, col_to_place, board_size) == team:
+                min_in_row += 1
+
+        for test_col in range(col_to_place - 1, col_to_place + 2):
+            if 0 > test_col or test_col > 15:
+                continue
+            if check_space(vert, test_col):
+                continue
+
+            in_row = 0
+            for row in range(0, board_size):
+                if check_space_wrapper(row, test_col, board_size) == team:
+                    in_row += 1
+            if in_row < min_in_row:
+                col_to_place = test_col
+                min_in_row = in_row
+
+
+
         if 0 <= col_to_place <= 15 and not check_space(vert, col_to_place):
             spawn(vert, col_to_place)
 
