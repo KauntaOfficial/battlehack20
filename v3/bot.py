@@ -155,7 +155,7 @@ def turn():
             # If neither location is available, go back to the start of the L formation.
             else:
                 lStage = 1
-                lCenterLane = spawnLanev1(vert, opp, step, team, opp_team, board_size)
+                lCenterLane = spawnLanev4(vert, opp, step, team, opp_team, board_size)
                 spawn(vert, lCenterLane)
             
             
@@ -295,9 +295,7 @@ def spawnLanev4(vert, opp, step, team, opp_team, board_size):
                     col < 15 and check_space(vert + forward, col + 1) != opp_team):
                 last_resort = col
         # Don't spawn if you instantly get eaten
-        if col > 0 and check_space(vert + forward, col - 1) == opp_team:
-            continue
-        if col < 15 and check_space(vert + forward, col + 1) == opp_team:
+        if check_space_wrapper(vert + forward, col - 1, board_size) == opp_team or check_space_wrapper(vert + forward, col + 1, board_size) == opp_team:
             continue
         opp_count = 0
         your_count = 0
@@ -310,15 +308,18 @@ def spawnLanev4(vert, opp, step, team, opp_team, board_size):
 
         # Checks to make sure there aren't any breakaway pawns
         # Scans from your side to the other!
-        priority = True
-        for row in range(vert + forward, opp, forward):
+        priority = False
+        for row in range(vert + forward, opp + forward, forward):
             if check_space(row, col) == team:
                 priority = False
+                break
             elif check_space(row, col) == opp_team:
+                priority = True
                 break
 
         if priority and not check_space(vert, col):
             priority_lane = col
+            dlog("Found priority @ " + str(priority_lane))
             break
 
         # If you're losing harder, then take it
