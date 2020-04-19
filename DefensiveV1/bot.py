@@ -56,6 +56,18 @@ def turn():
         #    move_forward()
         #    dlog('Pushed Forward')
         # try capturing pieces
+
+        opponents = 0
+        allies = 0
+        if check_space_wrapper(row + (forward * 2), col + 1, board_size) == opp_team:
+            opponents += 1
+        if check_space_wrapper(row + (forward * 2), col - 1, board_size) == opp_team:
+            opponents += 1
+        if check_space_wrapper(row, col + 1, board_size) == team:
+            allies += 1
+        if check_space_wrapper(row, col - 1, board_size) == team:
+            allies += 1
+
         if check_space_wrapper(row + forward, col + 1, board_size) == opp_team:  # up and right
             capture(row + forward, col + 1)
             # dlog('Captured at: (' + str(row + forward) + ', ' + str(col + 1) + ')')
@@ -66,7 +78,7 @@ def turn():
 
         # otherwise try to move forward
         elif row + forward != -1 and row + forward != board_size and not check_space_wrapper(row + forward, col,
-                                                                                             board_size):
+                                                                                             board_size) and allies >= opponents:
             #               ^  not off the board    ^            and    ^ directly forward is empty
             move_forward()
             # dlog('Moved forward!')
@@ -119,10 +131,15 @@ def turn():
             elif check_space(row, col_to_place) == team:
                 diff += 1
 
+        last_resort = -1
         for col in range(0, 15):
             if check_space(opp, col) == team:
+                if (col > 0 and check_space(vert + forward, col - 1) != opp_team) and (col < 15 and check_space(vert + forward, col + 1) != opp_team):
+                    last_resort = col
+            if col > 0 and check_space(vert + forward, col - 1) == opp_team:
                 continue
-
+            if col < 15 and check_space(vert + forward, col + 1) == opp_team:
+                continue
             opp_count = 0
             your_count = 0
 
@@ -132,20 +149,21 @@ def turn():
                 elif check_space(row, col) == team:
                     your_count += 1
 
-            if 0 < col < 15:
-                if check_space(opp, col - 1) == team and check_space(opp, col + 1) == team:
-                    if your_count == 0:
-                        col_to_place = col
-                        break
-                    else:
-                        continue
+            # if 0 < col < 15:
+            #     if check_space(opp, col - 1) == team and check_space(opp, col + 1) == team:
+            #         if your_count == 0:
+            #             col_to_place = col
+            #             break
+            #         else:
+            #             continue
 
-            if your_count - opp_count < -5:
-                continue
             if your_count - opp_count <= diff and not check_space(vert, col):
                 col_to_place = col
                 diff = your_count - opp_count
 
+        if (col_to_place > 0 and check_space(vert + forward, col_to_place - 1) == opp_team) or (col_to_place < 15 and check_space(vert + forward, col_to_place + 1) == opp_team):
+            if last_resort != -1:
+                col_to_place = last_resort
         spawn(vert, col_to_place)
 
         # for _ in range(board_size):
