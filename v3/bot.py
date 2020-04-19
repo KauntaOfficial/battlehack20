@@ -65,7 +65,7 @@ def turn():
         reinforce = False
         opponents = 0
         allies = 0
-        # Check to see if you can break neutrally or favorably
+        # Check to see if you can break favorably
         if check_space_wrapper(row + (forward * 2), col + 1, board_size) == opp_team:
             opponents += 1
         if check_space_wrapper(row + (forward * 2), col - 1, board_size) == opp_team:
@@ -74,28 +74,34 @@ def turn():
             allies += 1
         if check_space_wrapper(row, col - 1, board_size) == team:
             allies += 1
+        # Make sure the pawns move in the beginning/whenever possible
+        if opponents == 0:
+            allies += 1
 
         # Make sure you aren't the next in a pawn chain that has to move.
         # TODO: Make sure you're reinforcing the first pawn in a line WHILE not being taken
         # TODO: Make sure if you aren't crucial reinforcement, PUSH PUSH PUSH
-        if check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + (forward * 2), col + 2, board_size) == opp_team:  # up and right
+        if check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + (forward * 2),
+                                                                                                   col + 2,
+                                                                                                   board_size) == opp_team:  # up and right
             reinforce = True
-        elif check_space_wrapper(row + forward, col - 1, board_size) == team and check_space_wrapper(row + (forward * 2), col - 2, board_size) == opp_team:  # up and left
+        elif check_space_wrapper(row + forward, col - 1, board_size) == team and check_space_wrapper(
+                row + (forward * 2), col - 2, board_size) == opp_team:  # up and left
             reinforce = True
-        elif check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + (forward * 2), col, board_size) == opp_team:
+        elif check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(
+                row + (forward * 2), col, board_size) == opp_team:
             reinforce = True
-        elif check_space_wrapper(row + forward, col - 1, board_size) == team and check_space_wrapper(row + (forward * 2), col, board_size) == opp_team:
+        elif check_space_wrapper(row + forward, col - 1, board_size) == team and check_space_wrapper(
+                row + (forward * 2), col, board_size) == opp_team:
             reinforce = True
 
-        if check_space_wrapper(row + (forward * 2), col + 1, board_size) == team and opponents == 0:
-            reinforce = False
-        if check_space_wrapper(row + (forward * 2), col - 1, board_size) == team and opponents == 0:
-            reinforce = False
+        # if check_space_wrapper(row + (forward * 2), col + 1, board_size) == team and opponents == 0:
+        #     reinforce = False
+        # if check_space_wrapper(row + (forward * 2), col - 1, board_size) == team and opponents == 0:
+        #     reinforce = False
         # Make sure you push to the end if possible
         if row + forward == 0 or row + forward == board_size - 1:
             reinforce = False
-
-
 
         if check_space_wrapper(row + forward, col + 1, board_size) == opp_team:  # up and right
             capture(row + forward, col + 1)
@@ -108,7 +114,7 @@ def turn():
         # otherwise try to move forward
         elif not (not (row + forward != -1) or not (row + forward != board_size) or check_space_wrapper(row + forward,
                                                                                                         col,
-                                                                                                        board_size)) and allies >= opponents and not reinforce:
+                                                                                                        board_size)) and allies > opponents and not reinforce:
             #               ^  not off the board    ^            and    ^ directly forward is empty
             move_forward()
             # dlog('Moved forward!')
@@ -348,9 +354,9 @@ def spawnLanev4(vert, opp, step, team, opp_team, board_size):
 
     # If you find a priority lane with uncontested pawns, challenge it.
     if priority_lane != -1:
-        spawn(vert, priority_lane)
+        return priority_lane
     elif 0 <= col_to_place <= 15 and not check_space(vert, col_to_place):
-        spawn(vert, col_to_place)
+        return col_to_place
 
     # for _ in range(board_size):
     #    i = random.randint(0, board_size - 1)
