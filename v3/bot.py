@@ -84,6 +84,9 @@ def turn():
                 if board[row][lane] == opp_team:
                     priorityLanes.append(lane)
 
+        for _ in priorityLanes:
+            dlog(str(_))
+
         ## sets the center as the prioritized lane if the opponent has no units down.
         if len(priorityLanes) == 0:
             priorityLanes.append(7)
