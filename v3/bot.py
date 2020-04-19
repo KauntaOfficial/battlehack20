@@ -124,127 +124,122 @@ def turn():
             opp = 0
             step = -1
 
-        if lStage == 0:
-            # Optimizations:
-            # - Don't place if row is won
-            # - Don't place if row is gridlocked and rows next are won
-            if team == Team.WHITE:
-                forward = 1
-            else:
-                forward = -1
-
-            col_to_place = -1
-            for col in range(0, board_size):
-                if not check_space(vert, col):
-                    if check_space_wrapper(vert + forward, col - 1, board_size) == opp_team or check_space_wrapper(vert + forward, col + 1, board_size) == opp_team:
-                        continue
-
-                    col_to_place = col
-                    break
-
-            if col_to_place == -1:
-                for col in range(0, 15):
-                    if not check_space(vert, col):
-                        col_to_place = col
-                        break
-
-            diff = 0
-            for row in range(0, board_size):
-                if check_space(row, col_to_place) == opp_team:
-                    diff -= 1
-                elif check_space(row, col_to_place) == team:
-                    diff += 1
-
-            last_resort = -1
-            for col in range(0, board_size):
-                if check_space(opp, col) == team:
-                    if (col > 0 and check_space(vert + forward, col - 1) != opp_team) and (col < 15 and check_space(vert + forward, col + 1) != opp_team):
-                        last_resort = col
-                if col > 0 and check_space(vert + forward, col - 1) == opp_team:
-                    continue
-                if col < 15 and check_space(vert + forward, col + 1) == opp_team:
-                    continue
-                opp_count = 0
-                your_count = 0
-
-                for row in range(0, board_size):
-                    if check_space(row, col) == opp_team:
-                        opp_count += 1
-                    elif check_space(row, col) == team:
-                        your_count += 1
-
-                # if 0 < col < 15:
-                #     if check_space(opp, col - 1) == team and check_space(opp, col + 1) == team:
-                #         if your_count == 0:
-                #             col_to_place = col
-                #             break
-                #         else:
-                #             continue
-
-                if your_count - opp_count <= diff and not check_space(vert, col):
-                    col_to_place = col
-                    diff = your_count - opp_count
-
-            if check_space_wrapper(vert + forward, col_to_place - 1, board_size) == opp_team or check_space_wrapper(vert + forward, col_to_place + 1, board_size) == opp_team:
-                if last_resort != -1:
-                    col_to_place = last_resort
-
-            # dlog("Chosen: " + str(col_to_place))
-            if 0 <= col_to_place <= 15 and not check_space(vert, col_to_place):
-                lStage = 1
-                lCenterLane = col_to_place
-                spawn(vert, col_to_place)
-
-            # for _ in range(board_size):
-            #    i = random.randint(0, board_size - 1)
-            #    if not check_space(index, i):
-            #        spawn(vert, i)
-            #        dlog('Spawned unit at: (' + str(index) + ', ' + str(i) + ')')
-            #        break
-
-
-            ''' This is old code, replaced with Ivy's decision algorithm
-            board = get_board()
-            # Create an array of priority lanes, the lower the index, the higher the priority.
-            # So far, this is only based on how close the opponents pieces are to your side.
-            # TODO Fix the problem here with the rows and cols
-            priorityLanes = []
-            for row in range(index + step, oppIndex, step):
-                oppInRow = False
-                for lane in range(0,15):
-                    if board[row][lane] == opp_team and (lane not in priorityLanes):
-                        priorityLanes.append(lane)
-
-            for _ in priorityLanes:
-                dlog(str(_))
-
-            ## sets the center as the prioritized lane if the opponent has no units down.
-            if len(priorityLanes) == 0:
-                priorityLanes.append(7)
-
-            while True:
-                candidate = priorityLanes.pop()
-                if board[index][candidate] == None:
-                    lCenterLane = candidate
-                    break
-            
+        if lStage ==0:
             lStage = 1
-            spawn(index, lCenterLane)
-            '''
+            lCenterLane = chooseSpawnLane(vert, opp, step)
+            spawn(vert, lCenterLane)
             
         # Occurs when the first piece of the L is placed, places the second piece.
         elif lStage == 1:
             # TODO optimize the placement of the offset piece. Right now it is just random, but there is definitely something that can be done.
-            offset = 1 if ((random.randint(0,1) == 1 or lCenterLane == 0) and not lCenterLane == 15) else -1 #again, why does python let you pull this sort of bs
-            spawnLocation = lCenterLane + offset
-            lStage = 2
-            spawn(vert, spawnLocation)
+            if lCenterLane > 7:
+                offset = -1
+            else:
+                offset = 1
+
+            # Check to see if either of the sides are available, otherwise just decide on which space to go to based on the original placement algorithm, starting the process over.
+            if not check_space_wrapper(vert, lCenterLane + offset):
+                spawnLocation = lCenterLane + offset
+                spawn(vert, spawnLocation)
+                lStage = 2
+            elif not check_space_wrapper(vert, lCenterLane - offset):
+                spawnLocation = lCenterLane - offset
+                lStage = 2
+                spawn(vert, spawnLocation)
+            else:
+                lStage = 1
+                lCenterLane = chooseSpawnLane(vert, opp, step)
+                spawn(vert, lCenterLane)
+            
+            
 
         # Occurs during the final stage of the L, places the final piece.
         elif lStage == 2:
             lStage = 0
-            spawn(vert, lCenterLane)
+            if not check_space_wrapper(vert, lCenterLane):
+                spawn(vert, lCenterLane)
+            else:
+                lstage = 1
+                lCenterLane = chooseSpawnLane(vert, opp, step)
+                spawn(vert, lCenterLane)
 
+
+def chooseSpawnLane(vert, opp, step)
+    # Optimizations:
+    # - Don't place if row is won
+    # - Don't place if row is gridlocked and rows next are won
+    if team == Team.WHITE:
+        forward = 1
+    else:
+        forward = -1
+
+    col_to_place = -1
+    for col in range(0, board_size):
+        if not check_space(vert, col):
+            if check_space_wrapper(vert + forward, col - 1, board_size) == opp_team or check_space_wrapper(vert + forward, col + 1, board_size) == opp_team:
+                continue
+
+            col_to_place = col
+            break
+
+    if col_to_place == -1:
+        for col in range(0, 15):
+            if not check_space(vert, col):
+                col_to_place = col
+                break
+
+    diff = 0
+    for row in range(0, board_size):
+        if check_space(row, col_to_place) == opp_team:
+            diff -= 1
+        elif check_space(row, col_to_place) == team:
+            diff += 1
+
+    last_resort = -1
+    for col in range(0, board_size):
+        if check_space(opp, col) == team:
+            if (col > 0 and check_space(vert + forward, col - 1) != opp_team) and (col < 15 and check_space(vert + forward, col + 1) != opp_team):
+                last_resort = col
+        if col > 0 and check_space(vert + forward, col - 1) == opp_team:
+            continue
+        if col < 15 and check_space(vert + forward, col + 1) == opp_team:
+            continue
+        opp_count = 0
+        your_count = 0
+
+        for row in range(0, board_size):
+            if check_space(row, col) == opp_team:
+                opp_count += 1
+            elif check_space(row, col) == team:
+                your_count += 1
+
+        # if 0 < col < 15:
+        #     if check_space(opp, col - 1) == team and check_space(opp, col + 1) == team:
+        #         if your_count == 0:
+        #             col_to_place = col
+        #             break
+        #         else:
+        #             continue
+
+        if your_count - opp_count <= diff and not check_space(vert, col):
+            col_to_place = col
+            diff = your_count - opp_count
+
+    if check_space_wrapper(vert + forward, col_to_place - 1, board_size) == opp_team or check_space_wrapper(vert + forward, col_to_place + 1, board_size) == opp_team:
+        if last_resort != -1:
+            col_to_place = last_resort
+
+    # dlog("Chosen: " + str(col_to_place))
+    if 0 <= col_to_place <= 15 and not check_space(vert, col_to_place):
+        return col_to_place
+        
+
+    # for _ in range(board_size):
+    #    i = random.randint(0, board_size - 1)
+    #    if not check_space(index, i):
+    #        spawn(vert, i)
+    #        dlog('Spawned unit at: (' + str(index) + ', ' + str(i) + ')')
+    #        break
 
 
         
