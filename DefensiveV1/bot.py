@@ -57,8 +57,10 @@ def turn():
         #    dlog('Pushed Forward')
         # try capturing pieces
 
+        reinforce = False
         opponents = 0
         allies = 0
+        # Check to see if you can break neutrally or favorably
         if check_space_wrapper(row + (forward * 2), col + 1, board_size) == opp_team:
             opponents += 1
         if check_space_wrapper(row + (forward * 2), col - 1, board_size) == opp_team:
@@ -67,6 +69,28 @@ def turn():
             allies += 1
         if check_space_wrapper(row, col - 1, board_size) == team:
             allies += 1
+
+        # Make sure you aren't the next in a pawn chain that has to move.
+        # TODO: Make sure you're reinforcing the first pawn in a line WHILE not being taken
+        # TODO: Make sure if you aren't crucial reinforcement, PUSH PUSH PUSH
+        if check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + (forward * 2), col + 2, board_size) == opp_team:  # up and right
+            reinforce = True
+        elif check_space_wrapper(row + forward, col - 1, board_size) == team and check_space_wrapper(row + (forward * 2), col - 2, board_size) == opp_team:  # up and left
+            reinforce = True
+        elif check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + (forward * 2), col, board_size) == opp_team:
+            reinforce = True
+        elif check_space_wrapper(row + forward, col - 1, board_size) == team and check_space_wrapper(row + (forward * 2), col, board_size) == opp_team:
+            reinforce = True
+
+        if check_space_wrapper(row + (forward * 2), col + 1, board_size) == team and opponents == 0:
+            reinforce = False
+        if check_space_wrapper(row + (forward * 2), col - 1, board_size) == team and opponents == 0:
+            reinforce = False
+        # Make sure you push to the end if possible
+        if row + forward == 0 or row + forward == board_size - 1:
+            reinforce = False
+
+
 
         if check_space_wrapper(row + forward, col + 1, board_size) == opp_team:  # up and right
             capture(row + forward, col + 1)
@@ -77,8 +101,9 @@ def turn():
             # dlog('Captured at: (' + str(row + forward) + ', ' + str(col - 1) + ')')
 
         # otherwise try to move forward
-        elif row + forward != -1 and row + forward != board_size and not check_space_wrapper(row + forward, col,
-                                                                                             board_size) and allies >= opponents:
+        elif not (not (row + forward != -1) or not (row + forward != board_size) or check_space_wrapper(row + forward,
+                                                                                                        col,
+                                                                                                        board_size)) and allies >= opponents and not reinforce:
             #               ^  not off the board    ^            and    ^ directly forward is empty
             move_forward()
             # dlog('Moved forward!')
@@ -107,17 +132,14 @@ def turn():
             forward = -1
 
         col_to_place = -1
-        for col in range(0, 15):
-            if not check_space(vert, col) and not check_space(opp, col) == team:
-                if col > 0 and check_space(vert + forward, col - 1) == opp_team:
-                    continue
-                if col < 15 and check_space(vert + forward, col + 1) == opp_team:
+        for col in range(0, board_size):
+            if not check_space(vert, col):
+                if check_space_wrapper(vert + forward, col - 1, board_size) == opp_team or check_space_wrapper(vert + forward, col + 1, board_size) == opp_team:
                     continue
 
                 col_to_place = col
                 break
 
-        dlog("Chosen: " + str(col_to_place))
         if col_to_place == -1:
             for col in range(0, 15):
                 if not check_space(vert, col):
@@ -125,14 +147,14 @@ def turn():
                     break
 
         diff = 0
-        for row in range(0, 15):
+        for row in range(0, board_size):
             if check_space(row, col_to_place) == opp_team:
                 diff -= 1
             elif check_space(row, col_to_place) == team:
                 diff += 1
 
         last_resort = -1
-        for col in range(0, 15):
+        for col in range(0, board_size):
             if check_space(opp, col) == team:
                 if (col > 0 and check_space(vert + forward, col - 1) != opp_team) and (col < 15 and check_space(vert + forward, col + 1) != opp_team):
                     last_resort = col
@@ -143,7 +165,7 @@ def turn():
             opp_count = 0
             your_count = 0
 
-            for row in range(0, 15):
+            for row in range(0, board_size):
                 if check_space(row, col) == opp_team:
                     opp_count += 1
                 elif check_space(row, col) == team:
@@ -161,10 +183,13 @@ def turn():
                 col_to_place = col
                 diff = your_count - opp_count
 
-        if (col_to_place > 0 and check_space(vert + forward, col_to_place - 1) == opp_team) or (col_to_place < 15 and check_space(vert + forward, col_to_place + 1) == opp_team):
+        if check_space_wrapper(vert + forward, col_to_place - 1, board_size) == opp_team or check_space_wrapper(vert + forward, col_to_place + 1, board_size) == opp_team:
             if last_resort != -1:
                 col_to_place = last_resort
-        spawn(vert, col_to_place)
+
+        # dlog("Chosen: " + str(col_to_place))
+        if 0 <= col_to_place <= 15 and not check_space(vert, col_to_place):
+            spawn(vert, col_to_place)
 
         # for _ in range(board_size):
         #    i = random.randint(0, board_size - 1)
