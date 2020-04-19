@@ -124,9 +124,9 @@ def turn():
             opp = 0
             step = -1
 
-        if lStage ==0:
+        if lStage == 0:
             lStage = 1
-            lCenterLane = chooseSpawnLane(vert, opp, step)
+            lCenterLane = chooseSpawnLane(vert, opp, step, team, opp_team, board_size)
             spawn(vert, lCenterLane)
             
         # Occurs when the first piece of the L is placed, places the second piece.
@@ -138,17 +138,19 @@ def turn():
                 offset = 1
 
             # Check to see if either of the sides are available, otherwise just decide on which space to go to based on the original placement algorithm, starting the process over.
-            if not check_space_wrapper(vert, lCenterLane + offset):
+            if not check_space_wrapper(vert, lCenterLane + offset, board_size):
                 spawnLocation = lCenterLane + offset
                 spawn(vert, spawnLocation)
                 lStage = 2
-            elif not check_space_wrapper(vert, lCenterLane - offset):
+            # if first choice location is not available, try the other side
+            elif not check_space_wrapper(vert, lCenterLane - offset, board_size):
                 spawnLocation = lCenterLane - offset
                 lStage = 2
                 spawn(vert, spawnLocation)
+            # If neither location is available, go back to the start of the L formation.
             else:
                 lStage = 1
-                lCenterLane = chooseSpawnLane(vert, opp, step)
+                lCenterLane = chooseSpawnLane(vert, opp, step, team, opp_team, board_size)
                 spawn(vert, lCenterLane)
             
             
@@ -156,15 +158,16 @@ def turn():
         # Occurs during the final stage of the L, places the final piece.
         elif lStage == 2:
             lStage = 0
-            if not check_space_wrapper(vert, lCenterLane):
+            if not check_space_wrapper(vert, lCenterLane, board_size):
                 spawn(vert, lCenterLane)
+            # if you cannot place the final piece, go back to starting another L
             else:
                 lstage = 1
-                lCenterLane = chooseSpawnLane(vert, opp, step)
+                lCenterLane = chooseSpawnLane(vert, opp, step, team, opp_team, board_size)
                 spawn(vert, lCenterLane)
 
 
-def chooseSpawnLane(vert, opp, step)
+def chooseSpawnLane(vert, opp, step, team, opp_team, board_size):
     # Optimizations:
     # - Don't place if row is won
     # - Don't place if row is gridlocked and rows next are won
