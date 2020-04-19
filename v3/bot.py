@@ -132,12 +132,11 @@ def turn():
 
         if lStage == 0:
             lStage = 1
-            lCenterLane = spawnLanev4(vert, opp, step, team, opp_team, board_size)
+            lCenterLane = spawnLanev1(vert, opp, step, team, opp_team, board_size)
             spawn(vert, lCenterLane)
             
         # Occurs when the first piece of the L is placed, places the second piece.
         elif lStage == 1:
-            # TODO optimize the placement of the offset piece. Right now it is just random, but there is definitely something that can be done.
             if lCenterLane > 7:
                 offset = -1
             else:
@@ -156,7 +155,7 @@ def turn():
             # If neither location is available, go back to the start of the L formation.
             else:
                 lStage = 1
-                lCenterLane = spawnLanev4(vert, opp, step, team, opp_team, board_size)
+                lCenterLane = spawnLanev1(vert, opp, step, team, opp_team, board_size)
                 spawn(vert, lCenterLane)
             
             
@@ -169,7 +168,7 @@ def turn():
             # if you cannot place the final piece, go back to starting another L
             else:
                 lstage = 1
-                lCenterLane = spawnLanev4(vert, opp, step, team, opp_team, board_size)
+                lCenterLane = spawnLanev1(vert, opp, step, team, opp_team, board_size)
                 spawn(vert, lCenterLane)
 
 
