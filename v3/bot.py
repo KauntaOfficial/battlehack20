@@ -137,7 +137,6 @@ def turn():
             
         # Occurs when the first piece of the L is placed, places the second piece.
         elif lStage == 1:
-            # TODO optimize the placement of the offset piece. Right now it is just random, but there is definitely something that can be done.
             if lCenterLane > 7:
                 offset = -1
             else:
@@ -156,7 +155,7 @@ def turn():
             # If neither location is available, go back to the start of the L formation.
             else:
                 lStage = 1
-                lCenterLane = spawnLanev4(vert, opp, step, team, opp_team, board_size)
+                lCenterLane = spawnLanev1(vert, opp, step, team, opp_team, board_size)
                 spawn(vert, lCenterLane)
             
             
@@ -260,8 +259,7 @@ def spawnLanev4(vert, opp, step, team, opp_team, board_size):
     else:
         forward = -1
 
-    # If a lane is uncontested, clog it up
-    priority_lane = -1
+
     # First, pick a decent enough col to start off with
     col_to_place = -1
     for col in range(0, board_size):
@@ -287,6 +285,9 @@ def spawnLanev4(vert, opp, step, team, opp_team, board_size):
         elif check_space(row, col_to_place) == team:
             diff += 1
 
+    # If a lane is uncontested, clog it up
+    priority_lane = -1
+    # Last resort in case your lane is bad
     last_resort = -1
     for col in range(0, board_size):
         if check_space(opp, col) == team:
@@ -308,8 +309,9 @@ def spawnLanev4(vert, opp, step, team, opp_team, board_size):
                 your_count += 1
 
         # Checks to make sure there aren't any breakaway pawns
+        # Scans from your side to the other!
         priority = True
-        for row in range(1, 15):
+        for row in range(vert + forward, opp, forward):
             if check_space(row, col) == team:
                 priority = False
             elif check_space(row, col) == opp_team:
@@ -323,7 +325,6 @@ def spawnLanev4(vert, opp, step, team, opp_team, board_size):
         if your_count - opp_count <= diff and not check_space(vert, col):
             col_to_place = col
             diff = your_count - opp_count
-        priority_lane = 1
 
     # If chosen spot is eaten, then you want to go to your last resort which should be behind a won lane
     if check_space_wrapper(vert + forward, col_to_place - 1, board_size) == opp_team or check_space_wrapper(
