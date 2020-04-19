@@ -5,13 +5,19 @@ import random
 
 from battlehack20.stubs import *
 
-# This is an example bot written by the developers!
-# Use this to help write your own code, or run it against your bot to see how well you can do!
 
 DEBUG = 1
 def dlog(str):
     if DEBUG > 0:
         log(str)
+
+
+global lStage, lCenterLane
+# Controls which stage of the L we are currently on
+# 0 means nothing has been placed, 1 means the first piece has been placed, 2 means the second piece has been placed
+lStage = 0
+# lCenterLane controls which lane the L takes place in
+lCenterLane = 7
 
 
 def check_space_wrapper(r, c, board_size):
@@ -24,6 +30,7 @@ def check_space_wrapper(r, c, board_size):
         return None
 
 def turn():
+    global lStage, lCenterLane
     """
     MUST be defined for robot to run
     This function will be called at the beginning of every turn and should contain the bulk of your robot commands
@@ -40,91 +47,210 @@ def turn():
 
     if robottype == RobotType.PAWN:
         row, col = get_location()
-        dlog('My location is: ' + str(row) + ' ' + str(col))
+        # dlog('My location is: ' + str(row) + ' ' + str(col))
 
         if team == Team.WHITE:
             forward = 1
         else:
             forward = -1
 
-        # try catpuring pieces
-        if check_space_wrapper(row + forward, col + 1, board_size) == opp_team: # up and right
-            capture(row + forward, col + 1)
-            dlog('Captured at: (' + str(row + forward) + ', ' + str(col + 1) + ')')
+        # Pawn always wants to capture unless it has can establish control through pushing forward
+        # The main strategy here will just be when is not taking a better idea.
 
-        elif check_space_wrapper(row + forward, col - 1, board_size) == opp_team: # up and left
+        # if not row % 2 and not check_space_wrapper(row + (forward * 2), col + 1, board_size) and not check_space_wrapper(row + (forward * 2), col - 1, board_size) and row + forward != -1 and row + forward != board_size and not check_space_wrapper(row + forward, col, board_size):
+        #    move_forward()
+        #    dlog('Pushed Forward')
+        # try capturing pieces
+
+        reinforce = False
+        opponents = 0
+        allies = 0
+        # Check to see if you can break neutrally or favorably
+        if check_space_wrapper(row + (forward * 2), col + 1, board_size) == opp_team:
+            opponents += 1
+        if check_space_wrapper(row + (forward * 2), col - 1, board_size) == opp_team:
+            opponents += 1
+        if check_space_wrapper(row, col + 1, board_size) == team:
+            allies += 1
+        if check_space_wrapper(row, col - 1, board_size) == team:
+            allies += 1
+
+        # Make sure you aren't the next in a pawn chain that has to move.
+        # TODO: Make sure you're reinforcing the first pawn in a line WHILE not being taken
+        # TODO: Make sure if you aren't crucial reinforcement, PUSH PUSH PUSH
+        if check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + (forward * 2), col + 2, board_size) == opp_team:  # up and right
+            reinforce = True
+        elif check_space_wrapper(row + forward, col - 1, board_size) == team and check_space_wrapper(row + (forward * 2), col - 2, board_size) == opp_team:  # up and left
+            reinforce = True
+        elif check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + (forward * 2), col, board_size) == opp_team:
+            reinforce = True
+        elif check_space_wrapper(row + forward, col - 1, board_size) == team and check_space_wrapper(row + (forward * 2), col, board_size) == opp_team:
+            reinforce = True
+
+        if check_space_wrapper(row + (forward * 2), col + 1, board_size) == team and opponents == 0:
+            reinforce = False
+        if check_space_wrapper(row + (forward * 2), col - 1, board_size) == team and opponents == 0:
+            reinforce = False
+        # Make sure you push to the end if possible
+        if row + forward == 0 or row + forward == board_size - 1:
+            reinforce = False
+
+
+
+        if check_space_wrapper(row + forward, col + 1, board_size) == opp_team:  # up and right
+            capture(row + forward, col + 1)
+            # dlog('Captured at: (' + str(row + forward) + ', ' + str(col + 1) + ')')
+
+        elif check_space_wrapper(row + forward, col - 1, board_size) == opp_team:  # up and left
             capture(row + forward, col - 1)
-            dlog('Captured at: (' + str(row + forward) + ', ' + str(col - 1) + ')')
+            # dlog('Captured at: (' + str(row + forward) + ', ' + str(col - 1) + ')')
 
         # otherwise try to move forward
-        elif row + forward != -1 and row + forward != board_size and not check_space_wrapper(row + forward, col, board_size):
+        elif not (not (row + forward != -1) or not (row + forward != board_size) or check_space_wrapper(row + forward,
+                                                                                                        col,
+                                                                                                        board_size)) and allies >= opponents and not reinforce:
             #               ^  not off the board    ^            and    ^ directly forward is empty
             move_forward()
-            dlog('Moved forward!')
+            # dlog('Moved forward!')
 
     else:
         # Step variable is used so that code translates to both teams.
         if team == Team.WHITE:
-            index = 0
-            oppIndex = board_size - 1
+            vert = 0
+            opp = board_size - 1
             step = 1
         else:
-            index = board_size - 1
-            oppIndex = 0
+            vert = board_size - 1
+            opp = 0
             step = -1
 
-        board = get_board()
-        # Create an array of priority lanes, the lower the index, the higher the priority.
-        # So far, this is only based on how close the opponents pieces are to your side.
-        # TODO Fix the problem here with the rows and cols
-        priorityLanes = []
-        for row in range(index + step, oppIndex, step):
-            oppInRow = False
-            for lane in range(0,15):
-                if board[row][lane] == opp_team and (lane not in priorityLanes):
-                    priorityLanes.append(lane)
-
-        for _ in priorityLanes:
-            dlog(str(_))
-
-        ## sets the center as the prioritized lane if the opponent has no units down.
-        if len(priorityLanes) == 0:
-            priorityLanes.append(7)
-        
-        
-        # Figure out which lanes already have L formations in them. 
-        spawnLane = -1
-        for lane in priorityLanes:
-            teamPawnsInLane = 0
-            for i in range(oppIndex, index + (2 * step), step):
-                if board[i][lane] == team:
-                    teamPawnsInLane += 1
-            
-            ## If there is only one pawn in the current highest priority lane, then form the L behind them
-            # Also be sure to check if the side part of the L has already been placed.
-            # TODO optimize which side the L is placed on
-            if teamPawnsInLane == 1:
-                if check_space(index + step, lane-1) == team or check_space(index + step, lane+1) == team:
-                    # If either of these are true, all that's left to do is place the final piece beneath the original piece.
-                    spawnLane = lane
-                else:
-                    spawnLane = lane + (1 if (random.randint(0,1) == 1 or (lane == 0)) and not lane == 15 else -1) #what the fuck python why does this work
-            elif teamPawnsInLane <=2:
-                break
+        if lStage == 0:
+            # Optimizations:
+            # - Don't place if row is won
+            # - Don't place if row is gridlocked and rows next are won
+            if team == Team.WHITE:
+                forward = 1
             else:
-                spawnLane = lane
-        if spawnLane < 0:
-            spawnLane = priorityLanes.pop()
+                forward = -1
 
-        while True:
-            try:
-                spawn(index, spawnLane)
-                break
-            except:
-                try:
-                    spawnLane = priorityLanes.pop()
-                except:
-                    spawnLane = (spawnLane + 1) % 15
+            col_to_place = -1
+            for col in range(0, board_size):
+                if not check_space(vert, col):
+                    if check_space_wrapper(vert + forward, col - 1, board_size) == opp_team or check_space_wrapper(vert + forward, col + 1, board_size) == opp_team:
+                        continue
+
+                    col_to_place = col
+                    break
+
+            if col_to_place == -1:
+                for col in range(0, 15):
+                    if not check_space(vert, col):
+                        col_to_place = col
+                        break
+
+            diff = 0
+            for row in range(0, board_size):
+                if check_space(row, col_to_place) == opp_team:
+                    diff -= 1
+                elif check_space(row, col_to_place) == team:
+                    diff += 1
+
+            last_resort = -1
+            for col in range(0, board_size):
+                if check_space(opp, col) == team:
+                    if (col > 0 and check_space(vert + forward, col - 1) != opp_team) and (col < 15 and check_space(vert + forward, col + 1) != opp_team):
+                        last_resort = col
+                if col > 0 and check_space(vert + forward, col - 1) == opp_team:
+                    continue
+                if col < 15 and check_space(vert + forward, col + 1) == opp_team:
+                    continue
+                opp_count = 0
+                your_count = 0
+
+                for row in range(0, board_size):
+                    if check_space(row, col) == opp_team:
+                        opp_count += 1
+                    elif check_space(row, col) == team:
+                        your_count += 1
+
+                # if 0 < col < 15:
+                #     if check_space(opp, col - 1) == team and check_space(opp, col + 1) == team:
+                #         if your_count == 0:
+                #             col_to_place = col
+                #             break
+                #         else:
+                #             continue
+
+                if your_count - opp_count <= diff and not check_space(vert, col):
+                    col_to_place = col
+                    diff = your_count - opp_count
+
+            if check_space_wrapper(vert + forward, col_to_place - 1, board_size) == opp_team or check_space_wrapper(vert + forward, col_to_place + 1, board_size) == opp_team:
+                if last_resort != -1:
+                    col_to_place = last_resort
+
+            # dlog("Chosen: " + str(col_to_place))
+            if 0 <= col_to_place <= 15 and not check_space(vert, col_to_place):
+                lStage = 1
+                lCenterLane = col_to_place
+                spawn(vert, col_to_place)
+
+            # for _ in range(board_size):
+            #    i = random.randint(0, board_size - 1)
+            #    if not check_space(index, i):
+            #        spawn(vert, i)
+            #        dlog('Spawned unit at: (' + str(index) + ', ' + str(i) + ')')
+            #        break
+
+
+            ''' This is old code, replaced with Ivy's decision algorithm
+            board = get_board()
+            # Create an array of priority lanes, the lower the index, the higher the priority.
+            # So far, this is only based on how close the opponents pieces are to your side.
+            # TODO Fix the problem here with the rows and cols
+            priorityLanes = []
+            for row in range(index + step, oppIndex, step):
+                oppInRow = False
+                for lane in range(0,15):
+                    if board[row][lane] == opp_team and (lane not in priorityLanes):
+                        priorityLanes.append(lane)
+
+            for _ in priorityLanes:
+                dlog(str(_))
+
+            ## sets the center as the prioritized lane if the opponent has no units down.
+            if len(priorityLanes) == 0:
+                priorityLanes.append(7)
+
+            while True:
+                candidate = priorityLanes.pop()
+                if board[index][candidate] == None:
+                    lCenterLane = candidate
+                    break
+            
+            lStage = 1
+            spawn(index, lCenterLane)
+            '''
+            
+        # Occurs when the first piece of the L is placed, places the second piece.
+        elif lStage == 1:
+            # TODO optimize the placement of the offset piece. Right now it is just random, but there is definitely something that can be done.
+            offset = 1 if ((random.randint(0,1) == 1 or lCenterLane == 0) and not lCenterLane == 15) else -1 #again, why does python let you pull this sort of bs
+            spawnLocation = lCenterLane + offset
+            lStage = 2
+            spawn(vert, spawnLocation)
+
+        # Occurs during the final stage of the L, places the final piece.
+        elif lStage == 2:
+            lStage = 0
+            spawn(vert, lCenterLane)
+
+
+
+        
+        
+        
+        
             
 
 
