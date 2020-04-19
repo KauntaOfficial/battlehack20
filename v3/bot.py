@@ -81,7 +81,7 @@ def turn():
         for row in range(index + step, oppIndex, step):
             oppInRow = False
             for lane in range(0,15):
-                if board[row][lane] == opp_team:
+                if board[row][lane] == opp_team and (lane not in priorityLanes):
                     priorityLanes.append(lane)
 
         for _ in priorityLanes:
@@ -90,7 +90,7 @@ def turn():
         ## sets the center as the prioritized lane if the opponent has no units down.
         if len(priorityLanes) == 0:
             priorityLanes.append(7)
-        priorityLanes = list(set(priorityLanes))
+        
         
         # Figure out which lanes already have L formations in them. 
         spawnLane = -1
