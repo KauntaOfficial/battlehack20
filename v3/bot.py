@@ -130,14 +130,18 @@ def turn():
             opp = 0
             step = -1
 
+        board = get_board()
+        if checkForStrays(board, team, opp_team):
+            lStage = 0
+
+        # Start the L making process
         if lStage == 0:
             lStage = 1
             lCenterLane = spawnLanev4(vert, opp, step, team, opp_team, board_size)
-            spawn(vert, lCenterLane)
-            
+            spawn(vert, lCenterLane)     
         # Occurs when the first piece of the L is placed, places the second piece.
         elif lStage == 1:
-            if lCenterLane > 7:
+            if lCenterLane + 1 > 8:
                 offset = -1
             else:
                 offset = 1
@@ -171,6 +175,27 @@ def turn():
                 lCenterLane = spawnLanev4(vert, opp, step, team, opp_team, board_size)
                 spawn(vert, lCenterLane)
 
+
+# Returns True if any strays are present. Stray is defined as a opposing piece where none of our pieces are in that lane.
+# TODO see if changing the definition of stray to include pieces wihtout any of our pieces in adjacent lanes changes anything.
+def checkForStrays(board, team, opp_team):
+    straysPresent = False
+    enemyPieceCounts = [0 for i in range(0,15)]
+    friendlyPieceCounts = [0 for i in range(0,15)]
+
+    # get the piece counts for both teams, per lane
+    for lane in range(0, 15):
+        for row in range(0,15):
+            if board[row][lane] == team:
+                friendlyPieceCounts[lane] = friendlyPieceCounts[lane] + 1
+            elif board[row][lane] == opp_team:
+                enemyPieceCounts[lane] = enemyPieceCounts[lane] + 1
+
+    # Determines whether or not the L should be broken based on the number of strays or latent peices present.
+    for lane in range(0, 15):
+        if (enemyPieceCounts[lane] - friendlyPieceCounts[lane] > 3) or (enemyPieceCounts[lane] > 1 and friendlyPieceCounts[lane] == 0):
+            return True
+    return False
 
 def spawnLanev1(vert, opp, step, team, opp_team, board_size):
     # Optimizations:
