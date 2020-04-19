@@ -76,21 +76,21 @@ def turn():
         board = get_board()
         # Create an array of priority lanes, the lower the index, the higher the priority.
         # So far, this is only based on how close the opponents pieces are to your side.
+        # TODO Fix the problem here with the rows and cols
         priorityLanes = []
         for row in range(index + step, oppIndex, step):
             oppInRow = False
             for lane in range(0,15):
-                if board[row][lane] = opp_team:
+                if board[row][lane] == opp_team:
                     priorityLanes.append(lane)
 
         ## sets the center as the prioritized lane if the opponent has no units down.
         if len(priorityLanes) == 0:
             priorityLanes.append(7)
-        priorityLanes = set(priorityLanes)
+        priorityLanes = list(set(priorityLanes))
         
         # Figure out which lanes already have L formations in them. 
         spawnLane = -1
-        laneChoice = priorityLanes[0]
         for lane in priorityLanes:
             teamPawnsInLane = 0
             for i in range(oppIndex, index + (2 * step), step):
@@ -106,7 +106,7 @@ def turn():
                     # If either of these are true, all that's left to do is place the final piece beneath the original piece.
                     spawnLane = lane
                 else:
-                    spawnLane = lane + ((1 if random.randint(0,1) == 1 or lane == 0) and not lane == 15 else -1) #what the fuck python why does this work
+                    spawnLane = lane + (1 if (random.randint(0,1) == 1 or (lane == 0)) and not lane == 15 else -1) #what the fuck python why does this work
             elif teamPawnsInLane <=2:
                 break
             else:
@@ -121,7 +121,6 @@ def turn():
             except:
                 try:
                     spawnLane = priorityLanes.pop()
-                    break
                 except:
                     spawnLane = (spawnLane + 1) % 15
             
