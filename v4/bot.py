@@ -173,9 +173,7 @@ def turn():
                         col < 15 and check_space(vert + forward, col + 1) != opp_team):
                     last_resort = col
             # Don't spawn if you instantly get eaten
-            if col > 0 and check_space(vert + forward, col - 1) == opp_team:
-                continue
-            if col < 15 and check_space(vert + forward, col + 1) == opp_team:
+            if check_space_wrapper(vert + forward, col - 1, board_size) == opp_team or check_space_wrapper(vert + forward, col + 1, board_size) == opp_team:
                 continue
             opp_count = 0
             your_count = 0
@@ -188,15 +186,18 @@ def turn():
 
             # Checks to make sure there aren't any breakaway pawns
             # Scans from your side to the other!
-            priority = True
-            for row in range(vert + forward, opp, forward):
+            priority = False
+            for row in range(vert + forward, opp + forward, forward):
                 if check_space(row, col) == team:
                     priority = False
+                    break
                 elif check_space(row, col) == opp_team:
+                    priority = True
                     break
 
             if priority and not check_space(vert, col):
                 priority_lane = col
+                dlog("Found priority @ " + str(priority_lane))
                 break
 
             # If you're losing harder, then take it
@@ -233,8 +234,10 @@ def turn():
 
         # If you find a priority lane with uncontested pawns, challenge it.
         if priority_lane != -1:
+            dlog("Chose Priority: " + str(priority_lane))
             spawn(vert, priority_lane)
         elif 0 <= col_to_place <= 15 and not check_space(vert, col_to_place):
+            dlog("Chose: " + str(col_to_place))
             spawn(vert, col_to_place)
 
         # for _ in range(board_size):
