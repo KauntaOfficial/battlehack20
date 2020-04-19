@@ -94,7 +94,6 @@ def turn():
         for lane in priorityLanes:
             teamPawnsInLane = 0
             for i in range(oppIndex, index + (2 * step), step):
-                # Need to recognize the parts of an L in their various shapes
                 if board[i][lane] == team:
                     teamPawnsInLane += 1
             
