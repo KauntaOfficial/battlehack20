@@ -101,9 +101,7 @@ def turn():
         in_u = False
         proven = False
         # Try to break the U ONLY ON EDGES
-        if check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + forward,
-                                                                                                   col - 1,
-                                                                                                   board_size) == team and (row == 0 or row == board_size - 1):
+        if check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + forward,col - 1, board_size) == team and (col == 0 or col == board_size - 1):
             surroundings = sense()
             opponents_u_count = 0
             if len(surroundings) != 10:
