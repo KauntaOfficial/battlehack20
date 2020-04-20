@@ -101,34 +101,42 @@ def turn():
         in_u = False
         proven = False
         # Try to break the U ONLY ON EDGES
-        if check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + forward,
+        if (check_space_wrapper(row + forward, col + 1, board_size) == team and col == 0) or (check_space_wrapper(row + forward,
                                                                                                    col - 1,
-                                                                                                   board_size) == team and (row == 0 or row == board_size - 1):
+                                                                                                   board_size) == team and col == board_size - 1):
             surroundings = sense()
+            dlog("there are " + str(len(surroundings)) + " pawns around")
+            for pawn in surroundings:
+                dlog(str(pawn[0]) + ", " + str(pawn[1]))
             opponents_u_count = 0
             if len(surroundings) != 10:
+                dlog("Not enough")
                 proven = True
-            if in_u:
-                for pawn in surroundings:
-                    # Team must be behind or beside the pawns
-                    if pawn[2] == team:
-                        if team == Team.BLACK and pawn[0] < row - 1:
-                            proven = True
-                        elif team == Team.WHITE and pawn[0] > row + 1:
-                            proven = True
-                    else:
-                        opponents_u_count += 1
+
+            for pawn in surroundings:
+                if proven:
+                    break
+                # Team must be behind or beside the pawns
+                if pawn[2] == team:
+                    if team == Team.BLACK and pawn[0] < row - 1:
+                        dlog("Teammate too far, row is : " + str(pawn[0]))
+                        proven = True
+                    elif team == Team.WHITE and pawn[0] > row + 1:
+                        dlog("Teammate too far, row is : " + str(pawn[0]))
+                        proven = True
+                else:
+                    opponents_u_count += 1
 
             if opponents_u_count > 1:
                 proven = True
             if not proven:
                 in_u = True
 
-        forward_valid = (
+        forward_invalid = (
                     not (row + forward != -1) or not (row + forward != board_size) or check_space_wrapper(row + forward,
                                                                                                           col,
                                                                                                           board_size))
-        if forward_valid and in_u:
+        if not forward_invalid and in_u:
             dlog("breaking U")
             move_forward()
 
@@ -141,7 +149,7 @@ def turn():
             # dlog('Captured at: (' + str(row + forward) + ', ' + str(col - 1) + ')')
 
         # otherwise try to move forward
-        elif not forward_valid and allies > opponents and not reinforce:
+        elif not forward_invalid and allies > opponents and not reinforce:
             #               ^  not off the board    ^            and    ^ directly forward is empty
             move_forward()
             # dlog('Moved forward!')
