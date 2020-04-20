@@ -137,7 +137,7 @@ def turn():
         # Start the L making process
         if lStage == 0:
             lStage = 1
-            lCenterLane = spawnLanev4(vert, opp, step, team, opp_team, board_size)
+            lCenterLane = spawnLanev7(vert, opp, step, team, opp_team, board_size)
             spawn(vert, lCenterLane)     
         # Occurs when the first piece of the L is placed, places the second piece.
         elif lStage == 1:
@@ -159,7 +159,7 @@ def turn():
             # If neither location is available, go back to the start of the L formation.
             else:
                 lStage = 1
-                lCenterLane = spawnLanev4(vert, opp, step, team, opp_team, board_size)
+                lCenterLane = spawnLanev7(vert, opp, step, team, opp_team, board_size)
                 spawn(vert, lCenterLane)
             
             
@@ -172,7 +172,7 @@ def turn():
             # if you cannot place the final piece, go back to starting another L
             else:
                 lstage = 1
-                lCenterLane = spawnLanev4(vert, opp, step, team, opp_team, board_size)
+                lCenterLane = spawnLanev7(vert, opp, step, team, opp_team, board_size)
                 spawn(vert, lCenterLane)
 
 
@@ -390,13 +390,133 @@ def spawnLanev4(vert, opp, step, team, opp_team, board_size):
     #    if not check_space(index, i):
     #        spawn(vert, i)
     #        dlog('Spawned unit at: (' + str(index) + ', ' + str(i) + ')')
-    #        break
-    
-    
-    
-            
-
+    #        break 
 
     bytecode = get_bytecode()
     dlog('Done! Bytecode left: ' + str(bytecode))
 
+
+def spawnLanev7(vert, opp, step, team, opp_team, board_size):
+    # Where do we want to spawn the pawns? Center > Edges since you cover two spaces
+        # Maybe check to see where the opponent spawned as black and then counter?
+        # If you're white, want to go down a lane without any of your pawns not next to one already populated, if populated
+        # then you want to just fill a row you already have
+        
+
+        # Optimizations:
+        # - Don't place if row is won
+        # - Don't place if row is gridlocked and rows next are won
+        if team == Team.WHITE:
+            forward = 1
+        else:
+            forward = -1
+
+        # First, pick a decent enough col to start off with
+        col_to_place = -1
+        for col in range(0, board_size):
+            if not check_space(vert, col):
+                if check_space_wrapper(vert + forward, col - 1, board_size) == opp_team or check_space_wrapper(
+                        vert + forward, col + 1, board_size) == opp_team:
+                    continue
+
+                col_to_place = col
+                break
+
+        if col_to_place == -1:
+            for col in range(0, 15):
+                if not check_space(vert, col):
+                    col_to_place = col
+                    break
+
+        # Find the column where you are losing hardest (their pawn count - yours)
+        diff = 0
+        for row in range(0, board_size):
+            if check_space(row, col_to_place) == opp_team:
+                diff -= 1
+            elif check_space(row, col_to_place) == team:
+                diff += 1
+
+        # If a lane is uncontested, clog it up
+        priority_lane = -1
+        # Last resort in case your lane is bad
+        last_resort = -1
+        for col in range(0, board_size):
+            if check_space(opp, col) == team:
+                if (col > 0 and check_space(vert + forward, col - 1) != opp_team) and (
+                        col < 15 and check_space(vert + forward, col + 1) != opp_team):
+                    last_resort = col
+            # Don't spawn if you instantly get eaten
+            if check_space_wrapper(vert + forward, col - 1, board_size) == opp_team or check_space_wrapper(
+                    vert + forward, col + 1, board_size) == opp_team:
+                continue
+            opp_count = 0
+            your_count = 0
+
+            for row in range(0, board_size):
+                if check_space(row, col) == opp_team:
+                    opp_count += 1
+                elif check_space(row, col) == team:
+                    your_count += 1
+
+            # Checks to make sure there aren't any breakaway pawns
+            # Scans from your side to the other!
+            priority = False
+            for row in range(vert + forward, opp + forward, forward):
+                if check_space(row, col) == team:
+                    priority = False
+                    break
+                elif check_space(row, col) == opp_team:
+                    priority = True
+                    break
+
+            if priority and not check_space(vert, col):
+                priority_lane = col
+                # dlog("Found priority @ " + str(priority_lane))
+                break
+
+            # If you're losing harder, then take it
+            if your_count - opp_count <= diff and not check_space(vert, col):
+                col_to_place = col
+                diff = your_count - opp_count
+
+        # If chosen spot is eaten, then you want to go to your last resort which should be behind a won lane
+        if check_space_wrapper(vert + forward, col_to_place - 1, board_size) == opp_team or check_space_wrapper(
+                vert + forward, col_to_place + 1, board_size) == opp_team:
+            if last_resort != -1:
+                col_to_place = last_resort
+
+        # dlog("Chosen: " + str(col_to_place))
+        # TODO: Change to also evaluate the adjacent columns because they all contrib and spreading out troops is beneficial
+        min_in_row = 0
+        for i in range(0, board_size):
+            if check_space_wrapper(i, col_to_place, board_size) == team:
+                min_in_row += 1
+
+        for test_col in range(col_to_place - 1, col_to_place + 2):
+            if 0 > test_col or test_col > 15:
+                continue
+            if check_space(vert, test_col):
+                continue
+
+            in_row = 0
+            for row in range(0, board_size):
+                if check_space_wrapper(row, test_col, board_size) == team:
+                    in_row += 1
+            if in_row < min_in_row:
+                col_to_place = test_col
+                min_in_row = in_row
+
+        # If you find a priority lane with uncontested pawns, challenge it.
+        if priority_lane != -1:
+            # dlog("Chose Priority: " + str(priority_lane))
+            return priority_lane
+        elif 0 <= col_to_place <= 15 and not check_space(vert, col_to_place):
+            # dlog("Chose: " + str(col_to_place))
+            return col_to_place
+
+        # for _ in range(board_size):
+        #    i = random.randint(0, board_size - 1)
+        #    if not check_space(index, i):
+        #        spawn(vert, i)
+        #        dlog('Spawned unit at: (' + str(index) + ', ' + str(i) + ')')
+        #        break
