@@ -1,4 +1,5 @@
 import random
+import math
 
 from battlehack20.stubs import *
 
@@ -39,6 +40,16 @@ def turn():
 
     robottype = get_type()
     # dlog('Type: ' + str(robottype))
+
+    if team == Team.WHITE:
+        vert = 0
+        # Tracks the base of the opponent
+        opp = board_size - 1
+        white = True
+    else:
+        vert = board_size - 1
+        opp = 0
+        white = False
 
     if robottype == RobotType.PAWN:
         row, col = get_location()
@@ -129,14 +140,14 @@ def turn():
 
             if opponents_u_count > 1:
                 proven = True
-            if not proven:
+            if not proven: 
                 in_u = True
 
         forward_invalid = (
                     not (row + forward != -1) or not (row + forward != board_size) or check_space_wrapper(row + forward,
                                                                                                           col,
                                                                                                           board_size))
-        if not forward_invalid and in_u and row < vert + (7 if team == Team.WHITE else - 7):
+        if not forward_invalid and in_u and abs(vert - row) < 8:
             dlog("breaking U, but only if im in the right position")
             dlog("I am in row " + str(row))
             move_forward()
@@ -164,15 +175,7 @@ def turn():
         # Maybe check to see where the opponent spawned as black and then counter?
         # If you're white, want to go down a lane without any of your pawns not next to one already populated, if populated
         # then you want to just fill a row you already have
-        if team == Team.WHITE:
-            vert = 0
-            # Tracks the base of the opponent
-            opp = board_size - 1
-            white = True
-        else:
-            vert = board_size - 1
-            opp = 0
-            white = False
+        
 
         # Optimizations:
         # - Don't place if row is won
