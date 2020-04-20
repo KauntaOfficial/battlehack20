@@ -164,7 +164,7 @@ def turn():
                 diff += 1
 
         # Find the closest opposing pawn in each lane.
-        closestOppPawn = [board_size for i in range(0, board_size)]  
+        closestOppPawn = [board_size for i in range(0, board_size)]
         closestOppPawnLane = -1
         closestOppPawnDistance = board_size
         for lane in range(0,board_size):
