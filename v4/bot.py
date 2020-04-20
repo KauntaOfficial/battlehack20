@@ -114,6 +114,7 @@ def turn():
             move_forward()
             # dlog('Moved forward!')
 
+
     else:
         # Where do we want to spawn the pawns? Center > Edges since you cover two spaces
         # Maybe check to see where the opponent spawned as black and then counter?

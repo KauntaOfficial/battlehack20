@@ -131,8 +131,8 @@ def turn():
             step = -1
 
         board = get_board()
-        if checkForStrays(board, team, opp_team):
-            lStage = 0
+        #if checkForStrays(board, team, opp_team):
+        #    lStage = 0
 
         # Start the L making process
         if lStage == 0:
