@@ -123,6 +123,8 @@ def turn():
                     not (row + forward != -1) or not (row + forward != board_size) or check_space_wrapper(row + forward,
                                                                                                           col,
                                                                                                           board_size))
+
+
         if forward_valid and in_u:
             move_forward()
 
