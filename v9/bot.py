@@ -61,84 +61,86 @@ def turn():
 
         # This part here is a custom version of sense, which means that I can create my own formats.
         # Specific order for my own good.
-        surroundings = []
         opponents = 0
         allies = 0
         open = 0
+        sen = sense()
+        surr = [[None for i in range(0, 5)] for i in range(0, 5)]
 
-        # In front of the pawn will *always* be the higher numbers, so don't need to use forward when 
-        # using this list in the future.
-        for r in range(row - (2*forward), row + (2*forward)):
-            thisRow = []
-            for l in range(lane - 2, lane + 2):
-                if r >= 0 and r <= 15 and l >= 0 and l <= 15:
-                    space=check_space_wrapper(r, l, board_size)
-                    thisRow.append(space)
-                    # Increase the opponent and ally counters
-                    if space == team:
-                        allies += 1
-                    elif space == opp_team:
-                        opponents += 1
-                    elif not space:
-                        open += 1
-                else:
-                    # This designates that that spot is out of bounds.
-                    thisRow.append("OOB")
-            surroundings.append(thisRow)
+        for pawn in sen:
+            if pawn[2] == team:
+                allies += 1
+            elif pawn[2] == opp_team:
+                opponents += 1
 
-        move=False
+            surr[2 + (forward * (pawn[0]-row))][2+(pawn[1]-lane)] = pawn[2]
+
+        move=True
         captureRight=False
         captureLeft=False
         stayPut = False
 
+        # Set the row and the lane based on where the player is in the surr array.
+        r=2
+        l=2
+
         alliesToTheSides=0
-        for space in [surroundings[2][1], surroundings[2][3]]:
-            if space == team:
-                alliesToTheSides += 1
+        if surr[r+1][l+1] == team:
+            alliesToTheSides += 1
+        if surr[r+1][l-1] == team:
+            alliesToTheSides += 1
 
         # Check for opponenets that are a knight's move away.
         oppsKnightAway=0
-        for space in [surroundings[4][1], surroundings[4][3]]:
-            if space == opp_team:
-                oppsKnightAway += 1
+        if surr[r+2][l+1] == opp_team:
+            oppsKnightAway += 1
+        if surr[r+2][l-1] == opp_team:
+            oppsKnightAway += 1
+
 
         # Make sure the pawns move whenever possible.
         if oppsKnightAway == 0:
             alliesToTheSides += 1
+        
 
-        # Set the row and the lane based on where the player is in the surroundings array.
-        r=2
-        l=2
-
+        # Checks to see if the current pawn is a pawn that should stay put to help another pawn.
+        #for checkLane in (l - 1, l + 1):
+        #    for furtherLane in (checkLane-1, checkLane+1):
+        #        if surr[r+1][checkLane] == team and surr[r+2][furtherLane] == opp_team:
+        #            stayPut = True
+        if surr[r+1][l+1] == team and (surr[r+2][l+2]==opp_team or surr[r+2][l]==opp_team):
+            stayPut=True
+        elif surr[r+1][l-1] == team and (surr[r+2][l-2]==opp_team or surr[r+2][l]==opp_team):
+            stayPut = True
+        elif 
+        
         # Move to the end if the next space is the end of the board.
         if row + forward == opp:
             move=True
-
-        # Checks to see if the current pawn is a pawn that should stay put to help another pawn.
-        for checkLane in [l - 1, l + 1]:
-            for furtherLane in [checkLane-1, checkLane+1]:
-                if surroundings[r+1][checkLane] == team and surroundings[r+2][furtherLane] == opp_team:
-                    stayPut = True
+            stayPut = False
 
         # Set the flags for capturing if possible.        
-        if surroundings[r+1][l+1] == opp_team:
+        if surr[r+1][l+1] == opp_team:
             captureRight = True
-        elif surroundings[r+1][l+1] == opp_team:
+        elif surr[r+1][l+1] == opp_team:
             captureLeft = True
-        # TODO Double check the validity of the allies > opponents part.
-        elif (row != opp) and not surroundings[r+1][l] and allies > opponents and not stayPut:
+        # TODO Double check the validity of the allies > opponents part. 
+        elif (row != opp) and surr[r+1][l]==None and alliesToTheSides > oppsKnightAway and not stayPut:
             move=True
 
         
         #Execute the instructions
-        if move:
-            move_forward()
-        elif stayPut:
+        if stayPut:
             pass
         elif captureLeft:
             capture(row+forward, lane-1)
         elif captureRight:
             capture(row+forward, lane+1)  
+        elif move:
+            try:
+                move_forward()
+            except:
+                pass
 
     else:
         # Where do we want to spawn the pawns? Center > Edges since you cover two spaces
