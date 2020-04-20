@@ -98,7 +98,35 @@ def turn():
         if row + forward == 0 or row + forward == board_size - 1:
             reinforce = False
 
-        if check_space_wrapper(row + forward, col + 1, board_size) == opp_team:  # up and right
+        in_u = False
+        proven = False
+        # Try to break the U
+        if check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + forward,
+                                                                                                   col - 1,
+                                                                                                   board_size) == team and opponents == 2:
+            surroundings = sense()
+            if len(surroundings) != 18:
+                proven = True
+            if in_u:
+                for pawn in surroundings:
+                    # Team must be behind or beside the pawns
+                    if pawn[2] == team:
+                        if team == Team.BLACK and pawn[0] < row:
+                            proven = True
+                        elif team == Team.WHITE and pawn[0] > row:
+                            proven = True
+
+            if not proven:
+                in_u = True
+
+        forward_valid = (
+                    not (row + forward != -1) or not (row + forward != board_size) or check_space_wrapper(row + forward,
+                                                                                                          col,
+                                                                                                          board_size))
+        if forward_valid and in_u:
+            move_forward()
+
+        elif check_space_wrapper(row + forward, col + 1, board_size) == opp_team:  # up and right
             capture(row + forward, col + 1)
             # dlog('Captured at: (' + str(row + forward) + ', ' + str(col + 1) + ')')
 
@@ -107,13 +135,10 @@ def turn():
             # dlog('Captured at: (' + str(row + forward) + ', ' + str(col - 1) + ')')
 
         # otherwise try to move forward
-        elif not (not (row + forward != -1) or not (row + forward != board_size) or check_space_wrapper(row + forward,
-                                                                                                        col,
-                                                                                                        board_size)) and allies > opponents and not reinforce:
+        elif not forward_valid and allies > opponents and not reinforce:
             #               ^  not off the board    ^            and    ^ directly forward is empty
             move_forward()
             # dlog('Moved forward!')
-
 
     else:
         # Where do we want to spawn the pawns? Center > Edges since you cover two spaces
