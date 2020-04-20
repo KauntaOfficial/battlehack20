@@ -41,6 +41,16 @@ def turn():
     # dlog('Type: ' + str(robottype))
 
     if robottype == RobotType.PAWN:
+        if team == Team.WHITE:
+            vert = 0
+            # Tracks the base of the opponent
+            opp = board_size - 1
+            white = True
+        else:
+            vert = board_size - 1
+            opp = 0
+            white = False
+
         row, col = get_location()
         # dlog('My location is: ' + str(row) + ' ' + str(col))
 
@@ -109,7 +119,8 @@ def turn():
         # otherwise try to move forward
         elif not (not (row + forward != -1) or not (row + forward != board_size) or check_space_wrapper(row + forward,
                                                                                                         col,
-                                                                                                        board_size)) and allies > opponents and not reinforce:
+                                                                                                        board_size)) and allies > opponents and not reinforce and abs(row - vert) <= 8:
+
             #               ^  not off the board    ^            and    ^ directly forward is empty
             move_forward()
             # dlog('Moved forward!')
@@ -167,7 +178,6 @@ def turn():
         priority_lane = -1
         # Last resort in case your lane is bad
         last_resort = -1
-
         for col in range(0, board_size):
             if check_space(opp, col) == team:
                 if (col > 0 and check_space(vert + forward, col - 1) != opp_team) and (
@@ -203,40 +213,24 @@ def turn():
                 break
 
             # If you're losing harder, then take it
-            # CHANGE IT TO BE THE MOST CENTRAL PAWN
             # Maybe don't take edges.
-            if not check_space(vert, col):
-                if your_count - opp_count < diff:
-                    col_to_place = col
-                    diff = your_count - opp_count
-                elif your_count - opp_count == diff:
-                    if col_to_place <= 7:
-                        old_mid_dist = 7 - col_to_place
-                    else:
-                        old_mid_dist = col_to_place - 8
-                    if col <= 7:
-                        new_mid_dist = 7 - col
-                    else:
-                        new_mid_dist = col - 8
+            if your_count - opp_count <= diff and not check_space(vert, col):
+                col_to_place = col
+                diff = your_count - opp_count
 
-                    if new_mid_dist < old_mid_dist:
-                        col_to_place = col
-
-        ########################################### LAST RESORT ########################################################
         # If chosen spot is eaten, then you want to go to your last resort which should be behind a won lane
         if check_space_wrapper(vert + forward, col_to_place - 1, board_size) == opp_team or check_space_wrapper(
                 vert + forward, col_to_place + 1, board_size) == opp_team:
             if last_resort != -1:
                 col_to_place = last_resort
 
-        ########################################### CHECK ADJ PAWNS ####################################################
         # dlog("Chosen: " + str(col_to_place))
+        # TODO: Change to also evaluate the adjacent columns because they all contrib and spreading out troops is beneficial
         min_in_row = 0
         for i in range(0, board_size):
             if check_space_wrapper(i, col_to_place, board_size) == team:
                 min_in_row += 1
 
-        # TODO: Make it so you add the same equality test and try to take central pawns
         # dlog("row before tests: " + str(col_to_place))
         for test_col in range(col_to_place - 2, col_to_place + 3):
             if 0 > test_col or test_col > board_size - 1:
@@ -252,7 +246,6 @@ def turn():
                 col_to_place = test_col
                 min_in_row = in_row
 
-        ######################################### DECIDE WHICH OPTION TO TAKE ##########################################
         # dlog("row after tests: " + str(col_to_place))
         # If you find a priority lane with uncontested pawns, challenge it.
         if priority_lane != -1:
