@@ -226,10 +226,10 @@ def turn():
                 diff = your_count - opp_count
 
         ## Go through each of the choices, testing to see if they're valid
-        if check_space_wrapper(vert + forward, firstChoiceLane - 1, board_size) == opp_team or check_space_wrapper(
-                vert + forward, firstChoiceLane + 1, board_size) == opp_team:
-            if check_space_wrapper(vert + forward, secondChoice - 1, board_size) == opp_team or check_space_wrapper(
-                vert + forward, secondChoice + 1, board_size) == opp_team:
+        if (check_space_wrapper(vert + forward, firstChoiceLane - 1, board_size) == opp_team or check_space_wrapper(
+                vert + forward, firstChoiceLane + 1, board_size) == opp_team) or check_space_wrapper(vert, firstChoiceLane, board_size):
+            if (check_space_wrapper(vert + forward, secondChoice - 1, board_size) == opp_team or check_space_wrapper(
+                vert + forward, secondChoice + 1, board_size) == opp_team) or check_space_wrapper(vert, secondChoice, board_size):
                 if last_resort != -1:
                     col_to_place = last_resort
             else:
