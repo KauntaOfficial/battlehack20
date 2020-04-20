@@ -100,22 +100,27 @@ def turn():
 
         in_u = False
         proven = False
-        # Try to break the U
+        # Try to break the U ONLY ON EDGES
         if check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + forward,
                                                                                                    col - 1,
-                                                                                                   board_size) == team and opponents == 2:
+                                                                                                   board_size) == team and (row == 0 or row == board_size - 1):
             surroundings = sense()
-            if len(surroundings) != 18:
+            opponents_u_count = 0
+            if len(surroundings) != 10:
                 proven = True
             if in_u:
                 for pawn in surroundings:
                     # Team must be behind or beside the pawns
                     if pawn[2] == team:
-                        if team == Team.BLACK and pawn[0] < row:
+                        if team == Team.BLACK and pawn[0] < row - 1:
                             proven = True
-                        elif team == Team.WHITE and pawn[0] > row:
+                        elif team == Team.WHITE and pawn[0] > row + 1:
                             proven = True
+                    else:
+                        opponents_u_count += 1
 
+            if opponents_u_count > 1:
+                proven = True
             if not proven:
                 in_u = True
 
@@ -126,6 +131,7 @@ def turn():
 
 
         if forward_valid and in_u:
+            dlog("breaking U")
             move_forward()
 
         elif check_space_wrapper(row + forward, col + 1, board_size) == opp_team:  # up and right

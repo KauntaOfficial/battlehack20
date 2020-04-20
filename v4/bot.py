@@ -150,7 +150,7 @@ def turn():
                 break
 
         if col_to_place == -1:
-            for col in range(0, 15):
+            for col in range(0, board_size):
                 if not check_space(vert, col):
                     col_to_place = col
                     break
@@ -170,7 +170,7 @@ def turn():
         for col in range(0, board_size):
             if check_space(opp, col) == team:
                 if (col > 0 and check_space(vert + forward, col - 1) != opp_team) and (
-                        col < 15 and check_space(vert + forward, col + 1) != opp_team):
+                        col < board_size - 1 and check_space(vert + forward, col + 1) != opp_team):
                     last_resort = col
             # Don't spawn if you instantly get eaten
             if check_space_wrapper(vert + forward, col - 1, board_size) == opp_team or check_space_wrapper(
@@ -220,7 +220,7 @@ def turn():
                 min_in_row += 1
 
         for test_col in range(col_to_place - 1, col_to_place + 2):
-            if 0 > test_col or test_col > 15:
+            if 0 > test_col or test_col > board_size - 1:
                 continue
             if check_space(vert, test_col):
                 continue
@@ -237,7 +237,7 @@ def turn():
         if priority_lane != -1:
             # dlog("Chose Priority: " + str(priority_lane))
             spawn(vert, priority_lane)
-        elif 0 <= col_to_place <= 15 and not check_space(vert, col_to_place):
+        elif 0 <= col_to_place <= board_size - 1 and not check_space(vert, col_to_place):
             # dlog("Chose: " + str(col_to_place))
             spawn(vert, col_to_place)
 
