@@ -112,6 +112,7 @@ def turn():
             stayPut=True
         elif surr[r+1][l-1] == team and (surr[r+2][l-2]==opp_team or surr[r+2][l]==opp_team):
             stayPut = True
+        elif 
         
         # Move to the end if the next space is the end of the board.
         if row + forward == opp:
