@@ -40,6 +40,16 @@ def turn():
     robottype = get_type()
     # dlog('Type: ' + str(robottype))
 
+    if team == Team.WHITE:
+        vert = 0
+        # Tracks the base of the opponent
+        opp = board_size - 1
+        white = True
+    else:
+        vert = board_size - 1
+        opp = 0
+        white = False
+
     if robottype == RobotType.PAWN:
         row, col = get_location()
         # dlog('My location is: ' + str(row) + ' ' + str(col))
@@ -159,15 +169,7 @@ def turn():
         # Maybe check to see where the opponent spawned as black and then counter?
         # If you're white, want to go down a lane without any of your pawns not next to one already populated, if populated
         # then you want to just fill a row you already have
-        if team == Team.WHITE:
-            vert = 0
-            # Tracks the base of the opponent
-            opp = board_size - 1
-            white = True
-        else:
-            vert = board_size - 1
-            opp = 0
-            white = False
+        
 
         # Optimizations:
         # - Don't place if row is won
