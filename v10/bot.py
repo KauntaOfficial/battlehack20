@@ -90,19 +90,28 @@ def turn():
                 row + (forward * 2), col, board_size) == opp_team:
             reinforce = True
 
-        # if check_space_wrapper(row + (forward * 2), col + 1, board_size) == team and opponents == 0:
-        #     reinforce = False
-        # if check_space_wrapper(row + (forward * 2), col - 1, board_size) == team and opponents == 0:
-        #     reinforce = False
         # Make sure you push to the end if possible
         if row + forward == 0 or row + forward == board_size - 1:
             reinforce = False
 
-        if check_space_wrapper(row + forward, col + 1, board_size) == opp_team:  # up and right
+        left_challenge = (check_space_wrapper(row + forward, col - 1, board_size) == opp_team)
+        right_challenge = (check_space_wrapper(row + forward, col + 1, board_size) == opp_team)
+        backup = check_space_wrapper(row + (-forward), col + 1, board_size) == team or check_space_wrapper(row + (-forward), col - 1, board_size) == team
+
+        # If you form the wall of a U, don't take.
+        if check_space_wrapper(row + forward, col, board_size) == opp_team and (left_challenge or right_challenge):
+            if backup:
+                dlog("What's up, hope your team is doing well :)!")
+            elif left_challenge:
+                capture(row + forward, col - 1)
+            elif right_challenge:
+                capture(row + forward, col + 1)
+
+        elif right_challenge:  # up and right
             capture(row + forward, col + 1)
             # dlog('Captured at: (' + str(row + forward) + ', ' + str(col + 1) + ')')
 
-        elif check_space_wrapper(row + forward, col - 1, board_size) == opp_team:  # up and left
+        elif left_challenge:  # up and left
             capture(row + forward, col - 1)
             # dlog('Captured at: (' + str(row + forward) + ', ' + str(col - 1) + ')')
 

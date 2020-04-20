@@ -235,6 +235,28 @@ def turn():
                 col_to_place = test_col
                 min_in_row = in_row
 
+        # If they only have one more unit in the row, then you want to push the farthest away
+        push_lane = -1
+        push_length = -1
+        for col in range(0, board_size):
+            row_broke = -1
+            if check_space(opp, col) == team or check_space(vert, col):
+                continue
+            for row in range(vert + forward, opp, forward):
+                if check_space(row, col):
+                    row_broke = row
+                    break
+            if row_broke == -1:
+                continue
+
+            if push_lane == -1:
+                push_lane = col
+                push_length = row_broke
+            elif abs(row_broke - vert) > abs(push_length - vert):
+                push_lane = col
+                push_length = row_broke
+
+
         # dlog("row after tests: " + str(col_to_place))
         # If you find a priority lane with uncontested pawns, challenge it.
         if priority_lane != -1:
@@ -242,7 +264,17 @@ def turn():
             spawn(vert, priority_lane)
         elif 0 <= col_to_place <= board_size - 1 and not check_space(vert, col_to_place):
             # dlog("Chose: " + str(col_to_place))
-            spawn(vert, col_to_place)
+            final_diff = 0
+            for row in range(0, board_size):
+                if check_space(row, col_to_place) == opp_team:
+                    final_diff -= 1
+                elif check_space(row, col_to_place) == team:
+                    final_diff += 1
+
+            if final_diff >= -1 and push_lane != -1:
+                spawn(vert, push_lane)
+            else:
+                spawn(vert, col_to_place)
 
         # for _ in range(board_size):
         #    i = random.randint(0, board_size - 1)
