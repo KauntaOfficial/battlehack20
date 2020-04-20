@@ -73,6 +73,7 @@ def turn():
             for l in range(lane - 2, lane + 2):
                 if r >= 0 and r <= 15 and l >= 0 and l <= 15:
                     space=check_space_wrapper(r, l, board_size)
+                    dlog(str(space))
                     thisRow.append(space)
                     # Increase the opponent and ally counters
                     if space == team:
@@ -86,19 +87,21 @@ def turn():
                     thisRow.append("OOB")
             surroundings.append(thisRow)
 
-        move=False
+        dlog(str(surroundings))
+
+        move=True
         captureRight=False
         captureLeft=False
         stayPut = False
 
         alliesToTheSides=0
-        for space in [surroundings[2][1], surroundings[2][3]]:
+        for space in list(surroundings[2][1], surroundings[2][3]):
             if space == team:
                 alliesToTheSides += 1
 
         # Check for opponenets that are a knight's move away.
         oppsKnightAway=0
-        for space in [surroundings[4][1], surroundings[4][3]]:
+        for space in list(surroundings[4][1], surroundings[4][3]):
             if space == opp_team:
                 oppsKnightAway += 1
 
@@ -115,8 +118,8 @@ def turn():
             move=True
 
         # Checks to see if the current pawn is a pawn that should stay put to help another pawn.
-        for checkLane in [l - 1, l + 1]:
-            for furtherLane in [checkLane-1, checkLane+1]:
+        for checkLane in list(l - 1, l + 1):
+            for furtherLane in list(checkLane-1, checkLane+1):
                 if surroundings[r+1][checkLane] == team and surroundings[r+2][furtherLane] == opp_team:
                     stayPut = True
 
@@ -125,20 +128,20 @@ def turn():
             captureRight = True
         elif surroundings[r+1][l+1] == opp_team:
             captureLeft = True
-        # TODO Double check the validity of the allies > opponents part.
-        elif (row != opp) and not surroundings[r+1][l] and allies > opponents and not stayPut:
+        # TODO Double check the validity of the allies > opponents part. Currently, allies > opponents is deleted.
+        elif (row != opp) and surroundings[r+1][l]!=False and not stayPut:
             move=True
 
         
         #Execute the instructions
-        if move:
-            move_forward()
-        elif stayPut:
+        if stayPut:
             pass
         elif captureLeft:
             capture(row+forward, lane-1)
         elif captureRight:
             capture(row+forward, lane+1)  
+        elif move:
+            move_forward()
 
     else:
         # Where do we want to spawn the pawns? Center > Edges since you cover two spaces
