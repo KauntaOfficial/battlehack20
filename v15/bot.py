@@ -7,7 +7,7 @@ from battlehack20.stubs import *
 # when to push instead of eat, then you can defend and win. Also could be interesting strategy to
 # try and sneak some pawns down the side when the middle is locked up.
 
-DEBUG = 1
+DEBUG = 0
 
 
 def dlog(str):
@@ -80,10 +80,10 @@ def turn():
         if opponents == 0:
             push = True
 
-        if push:
-            dlog("PUSH")
-        else:
-            dlog("NOPUSH")
+        # if push:
+            # dlog("PUSH")
+        # else:
+            # dlog("NOPUSH")
 
 
         # Make sure you aren't the next in a pawn chain that has to move.
@@ -233,7 +233,7 @@ def turn():
             if check_space_wrapper(i, col_to_place, board_size) == team:
                 min_in_row += 1
 
-        dlog("row before tests: " + str(col_to_place))
+        # dlog("row before tests: " + str(col_to_place))
         for test_col in range(col_to_place - 2, col_to_place + 3):
             if 0 > test_col or test_col > board_size - 1:
                 continue

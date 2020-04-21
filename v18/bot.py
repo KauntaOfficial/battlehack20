@@ -65,15 +65,18 @@ def turn():
         push = True
         opponents = 0
         allies = 0
+
+        # Ultra defensive, make sure you have both supports
+        if check_space_wrapper(row + (forward * -1), col + 1, board_size) and check_space_wrapper(row + (forward * -1), col + 1, board_size) != team:
+            push = False
+        if check_space_wrapper(row + (forward * -1), col - 1, board_size) and check_space_wrapper(row + (forward * -1), col - 1, board_size) != team:
+            push = False
+
         # Check to see if you can break favorably
         if check_space_wrapper(row + (forward * 2), col + 1, board_size) == opp_team:
             opponents += 1
-            if check_space_wrapper(row + (forward * -1), col + 1, board_size) != team:
-                push = False
         if check_space_wrapper(row + (forward * 2), col - 1, board_size) == opp_team:
             opponents += 1
-            if check_space_wrapper(row + (forward * -1), col - 1, board_size) != team:
-                push = False
         if check_space_wrapper(row, col + 1, board_size) == team:
             allies += 1
         if check_space_wrapper(row, col - 1, board_size) == team:
@@ -274,7 +277,7 @@ def turn():
             for row in range(0, board_size):
                 if check_space_wrapper(row, test_col, board_size) == team:
                     in_row += 1
-            if in_row < min_in_row:
+            if in_row <= min_in_row:
                 col_to_place = test_col
                 min_in_row = in_row
 
