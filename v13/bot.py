@@ -77,8 +77,6 @@ def turn():
             allies += 1
 
         # Make sure you aren't the next in a pawn chain that has to move.
-        # TODO: Make sure you're reinforcing the first pawn in a line WHILE not being taken
-        # TODO: Make sure if you aren't crucial reinforcement, PUSH PUSH PUSH
         if check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + (forward * 2),
                                                                                                    col + 2,
                                                                                                    board_size) == opp_team:  # up and right
