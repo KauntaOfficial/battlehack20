@@ -7,7 +7,7 @@ from battlehack20.stubs import *
 # when to push instead of eat, then you can defend and win. Also could be interesting strategy to
 # try and sneak some pawns down the side when the middle is locked up.
 
-DEBUG = 0
+DEBUG = 1
 
 
 def dlog(str):
@@ -150,8 +150,27 @@ def turn():
             forward = -1
 
         # First, pick a decent enough col to start off with
+        initial_weights = [0 for i in range(0, board_size)]
+        adjusted_weights = [0 for i in range(0, board_size)]
+
         col_to_place = -1
         col_to_place_weight = -1
+
+        for col in range(0, board_size):
+            col_weight = 0
+            for row in range(0, board_size):
+                if check_space(row, col) == opp_team:
+                    col_weight += abs(row - opp)
+                elif check_space(row, col) == team:
+                    col_weight -= abs(row - vert)
+            initial_weights[col] = col_weight
+
+        for i in range(0, board_size):
+            adjusted_weights[i] = initial_weights[i]
+            if i > 0:
+                adjusted_weights[i] = adjusted_weights[i] + 1/2 * initial_weights[i - 1]
+            if i < board_size - 1:
+                adjusted_weights[i] = adjusted_weights[i] + 1/2 * initial_weights[i + 1]
 
         # If a lane is uncontested, clog it up
         priority_lane = -1
@@ -166,14 +185,6 @@ def turn():
             if check_space_wrapper(vert + forward, col - 1, board_size) == opp_team or check_space_wrapper(
                     vert + forward, col + 1, board_size) == opp_team:
                 continue
-            col_weight = 0
-
-            for row in range(0, board_size):
-                if check_space(row, col) == opp_team:
-                    col_weight += abs(row - opp)
-                elif check_space(row, col) == team:
-                    col_weight -= abs(row - vert)
-                # TODO: Your own pawn weight?
 
             # Checks to make sure there aren't any breakaway pawns
             # Scans from your side to the other!
@@ -191,19 +202,16 @@ def turn():
                 # dlog("Found priority @ " + str(priority_lane))
                 break
 
-            dlog("weight of col is " + str(col_weight))
             # If you're losing harder, then take it
-            # Maybe don't take edges.
             if not check_space(vert, col):
-                dlog("comparing old: " + str(col_to_place_weight) + " vs new: " + str(col_weight))
                 if col_to_place == -1:
-                    dlog("default: " + str(col))
+                    dlog("Initial: " + str(adjusted_weights[col]))
                     col_to_place = col
-                    col_to_place_weight = col_weight
-                elif col_weight > col_to_place_weight:
-                    dlog("update: " + str(col))
+                    col_to_place_weight = adjusted_weights[col]
+                elif adjusted_weights[col] > col_to_place_weight:
                     col_to_place = col
-                    col_to_place_weight = col_weight
+                    col_to_place_weight = adjusted_weights[col]
+                    dlog("updating: " + str(adjusted_weights[col]))
 
         # If chosen spot is eaten, then you want to go to your last resort which should be behind a won lane
         if check_space_wrapper(vert + forward, col_to_place - 1, board_size) == opp_team or check_space_wrapper(
@@ -211,28 +219,6 @@ def turn():
             if last_resort != -1:
                 col_to_place = last_resort
 
-        # dlog("Chosen: " + str(col_to_place))
-        # TODO: Change to also evaluate the adjacent columns because they all contrib and spreading out troops is beneficial
-        # TODO: cHange to also use same weighting?
-        # min_in_row = 0
-        # for i in range(0, board_size):
-        #     if check_space_wrapper(i, col_to_place, board_size) == team:
-        #         min_in_row += 1
-
-        # dlog("row before tests: " + str(col_to_place))
-        # for test_col in range(col_to_place - 2, col_to_place + 3):
-        #     if 0 > test_col or test_col > board_size - 1:
-        #         continue
-        #     if check_space(vert, test_col):
-        #         continue
-        #
-        #     in_row = 0
-        #     for row in range(0, board_size):
-        #         if check_space_wrapper(row, test_col, board_size) == team:
-        #             in_row += 1
-        #     if in_row < min_in_row:
-        #         col_to_place = test_col
-        #         min_in_row = in_row
 
         # dlog("row after tests: " + str(col_to_place))
         # If you find a priority lane with uncontested pawns, challenge it.
@@ -242,13 +228,6 @@ def turn():
         elif 0 <= col_to_place <= board_size - 1 and not check_space(vert, col_to_place):
             dlog("Chose: " + str(col_to_place))
             spawn(vert, col_to_place)
-
-        # for _ in range(board_size):
-        #    i = random.randint(0, board_size - 1)
-        #    if not check_space(index, i):
-        #        spawn(vert, i)
-        #        dlog('Spawned unit at: (' + str(index) + ', ' + str(i) + ')')
-        #        break
 
     bytecode = get_bytecode()
     # dlog('Done! Bytecode left: ' + str(bytecode))
