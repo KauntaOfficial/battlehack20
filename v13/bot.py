@@ -180,6 +180,8 @@ def turn():
         # Prioritizes placing where your enemies are closer than further away
         firstChoiceLane = closestOppPawnLane
 
+        # Set second choice to a placeholder just in case.
+        secondChoice = -1
         # If a lane is uncontested, clog it up
         priority_lane = -1
         # Last resort in case your lane is bad
@@ -232,7 +234,7 @@ def turn():
         if (check_space_wrapper(vert + forward, firstChoiceLane - 1, board_size) == opp_team or check_space_wrapper(
                 vert + forward, firstChoiceLane + 1, board_size) == opp_team) or check_space_wrapper(vert, firstChoiceLane, board_size) or firstChoiceLane == -1:
             if (check_space_wrapper(vert + forward, secondChoice - 1, board_size) == opp_team or check_space_wrapper(
-                vert + forward, secondChoice + 1, board_size) == opp_team) or check_space_wrapper(vert, secondChoice, board_size):
+                vert + forward, secondChoice + 1, board_size) == opp_team) or check_space_wrapper(vert, secondChoice, board_size) or secondChoice == -1:
                 if last_resort != -1:
                     col_to_place = last_resort
             else:
