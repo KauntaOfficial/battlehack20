@@ -210,12 +210,14 @@ def turn():
 
         for col in range(0, board_size):
             col_weight = 0
+            col_pawns = 0
             for row in range(0, board_size):
                 if check_space(row, col) == opp_team:
                     col_weight += abs(row - opp)
                 elif check_space(row, col) == team:
                     col_weight -= abs(row - vert)
-            initial_weights[col] = col_weight
+                    col_pawns += 1
+            initial_weights[col] = col_weight - 0.1 * col_pawns
 
         for i in range(0, board_size):
             adjusted_weights[i] = initial_weights[i]
@@ -254,6 +256,7 @@ def turn():
                 # dlog("Found priority @ " + str(priority_lane))
                 break
 
+            dlog("Weight of " + str(col) + " is " + str(adjusted_weights[col]))
             # If you're losing harder, then take it
             if not check_space(vert, col):
                 if col_to_place == -1:
@@ -263,7 +266,7 @@ def turn():
                 elif adjusted_weights[col] > col_to_place_weight:
                     col_to_place = col
                     col_to_place_weight = adjusted_weights[col]
-                    dlog("updating: " + str(adjusted_weights[col]))
+                    dlog("updating: " + str(adjusted_weights[col]) + " " + str(col))
 
         # If chosen spot is eaten, then you want to go to your last resort which should be behind a won lane
         if check_space_wrapper(vert + forward, col_to_place - 1, board_size) == opp_team or check_space_wrapper(
