@@ -9,7 +9,7 @@ from battlehack20.stubs import *
 
 # Only changes made were to the spawning. Changed the first priority spawn to be the lane in which the enemy is closest.
 # This bot beats v7 handily on both sides
-# This is v13 
+# This is v13 but with v15 pawns    
 
 DEBUG = 1
 
