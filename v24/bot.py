@@ -10,7 +10,7 @@ from battlehack20.stubs import *
 # This version of the bot uses the pawn code from version 23
 # Uses the spawning code from version 22
 
-DEBUG = 0
+DEBUG = 1
 
 
 def dlog(str):
@@ -98,7 +98,8 @@ def turn():
         # TODO: Make sure you're reinforcing the first pawn in a line WHILE not being taken
         # TODO: Make sure if you aren't crucial reinforcement, PUSH PUSH PUSH
         if check_space_wrapper(row + forward, col + 1, board_size) == team and check_space_wrapper(row + (forward * 2),
-                                                                                                   col + 2, board_size) == opp_team:  # up and right
+                                                                                                   col + 2,
+                                                                                                   board_size) == opp_team:  # up and right
             reinforce = True
         elif check_space_wrapper(row + forward, col - 1, board_size) == team and check_space_wrapper(
                 row + (forward * 2), col - 2, board_size) == opp_team:  # up and left
@@ -127,12 +128,14 @@ def turn():
             captureLeft = True
             # dlog('Captured at: (' + str(row + forward) + ', ' + str(col - 1) + ')')
 
-        #Check for the arrow pattern, meaning that you should not capture.
-        if (check_space_wrapper(row+forward, col, board_size) == opp_team and # Check right in front for an opponent
-            check_space_wrapper(row, col+1, board_size) == opp_team and # Check to the right for an opponent
-            check_space_wrapper(row, col-1, board_size) == opp_team and # Check to the left for an opponent
-            check_space_wrapper(row+(forward*-1), col+1, board_size) == team and # Check one back and to the right for a friendly
-            check_space_wrapper(row+(forward*-1), col-1, board_size) == team): # Check one back and to the left for a friendly
+        # Check for the arrow pattern, meaning that you should not capture.
+        if (check_space_wrapper(row + forward, col, board_size) == opp_team and  # Check right in front for an opponent
+                check_space_wrapper(row, col + 1, board_size) == opp_team and  # Check to the right for an opponent
+                check_space_wrapper(row, col - 1, board_size) == opp_team and  # Check to the left for an opponent
+                check_space_wrapper(row + (forward * -1), col + 1,
+                                    board_size) == team and  # Check one back and to the right for a friendly
+                check_space_wrapper(row + (forward * -1), col - 1,
+                                    board_size) == team):  # Check one back and to the left for a friendly
             captureLeft = False
             captureRight = False
 
@@ -140,18 +143,22 @@ def turn():
         rightTrades = 0
         leftTrades = 0
         # Get all the pieces ready to trade to the right
-        if check_space_wrapper(row, col+2, board_size) == team: # Check 2 spaces to the right for a friendly.
+        if check_space_wrapper(row, col + 2, board_size) == team:  # Check 2 spaces to the right for a friendly.
             rightTrades += 1
-            if check_space_wrapper(row+(forward*-1), col+2, board_size) == team: # Check two to the right and one back for a friendly
+            if check_space_wrapper(row + (forward * -1), col + 2,
+                                   board_size) == team:  # Check two to the right and one back for a friendly
                 rightTrades += 1
-                if check_space_wrapper(row+(forward*-2), col+2, board_size) == team: # Check two to the right and two back for a friendly
+                if check_space_wrapper(row + (forward * -2), col + 2,
+                                       board_size) == team:  # Check two to the right and two back for a friendly
                     rightTrades += 1
         # Get all the pieces ready to trade to the left
-        if check_space_wrapper(row, col-2, board_size) == team: # Check 2 spaces to the left for a friendly.
+        if check_space_wrapper(row, col - 2, board_size) == team:  # Check 2 spaces to the left for a friendly.
             leftTrades += 1
-            if check_space_wrapper(row+(forward*-1), col-2, board_size) == team: # Check two to the left and one back for a friendly
+            if check_space_wrapper(row + (forward * -1), col - 2,
+                                   board_size) == team:  # Check two to the left and one back for a friendly
                 leftTrades += 1
-                if check_space_wrapper(row+(forward*-2), col-2, board_size) == team: # Check two to the left and two back for a friendly
+                if check_space_wrapper(row + (forward * -2), col - 2,
+                                       board_size) == team:  # Check two to the left and two back for a friendly
                     leftTrades += 1
 
         if rightTrades > leftTrades:
@@ -160,19 +167,19 @@ def turn():
             prioritizeLeft = True
         else:
             prioritizeLeft = prioritizeRight = False
-            
 
         if prioritizeLeft and captureLeft and not prioritizeRight:
-            capture(row+forward, col-1) 
+            capture(row + forward, col - 1)
         elif prioritizeRight and captureRight and not prioritizeLeft:
-            capture(row+forward, col+1)
+            capture(row + forward, col + 1)
         elif captureLeft:
-            capture(row+forward, col-1) 
+            capture(row + forward, col - 1)
         elif captureRight:
-            capture(row+forward, col+1)
+            capture(row + forward, col + 1)
         # otherwise try to move forward
         elif not (not (row + forward != -1) or not (row + forward != board_size) or check_space_wrapper(row + forward,
-                                                                                                        col, board_size)) and not reinforce and push:
+                                                                                                        col,
+                                                                                                        board_size)) and not reinforce and push:
             #               ^  not off the board    ^            and    ^ directly forward is empty
             move_forward()
             # dlog('Moved forward!')
@@ -218,13 +225,15 @@ def turn():
                     col_weight -= abs(row - vert)
                     col_pawns += 1
             initial_weights[col] = col_weight - 0.1 * col_pawns
+            if 1 <= col <= board_size - 2:
+                initial_weights[col] = initial_weights[col] + 0.01
 
         for i in range(0, board_size):
             adjusted_weights[i] = initial_weights[i]
             if i > 0:
-                adjusted_weights[i] = adjusted_weights[i] + 1/2 * initial_weights[i - 1]
+                adjusted_weights[i] = adjusted_weights[i] + 1 / 2 * initial_weights[i - 1]
             if i < board_size - 1:
-                adjusted_weights[i] = adjusted_weights[i] + 1/2 * initial_weights[i + 1]
+                adjusted_weights[i] = adjusted_weights[i] + 1 / 2 * initial_weights[i + 1]
 
         # If a lane is uncontested, clog it up
         priority_lane = -1
@@ -273,7 +282,6 @@ def turn():
                 vert + forward, col_to_place + 1, board_size) == opp_team:
             if last_resort != -1:
                 col_to_place = last_resort
-
 
         # dlog("row after tests: " + str(col_to_place))
         # If you find a priority lane with uncontested pawns, challenge it.
