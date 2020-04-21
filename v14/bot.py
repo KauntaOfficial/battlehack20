@@ -8,6 +8,8 @@ from battlehack20.stubs import *
 # try and sneak some pawns down the side when the middle is locked up.
 
 # Only changes made were to the spawning. Derivative of v13, slightly punishes lanes where we have a heavy pawn advantage, encouraging the bot to spread spawns out more.
+# has v7 pawn code
+
 
 
 DEBUG = 1
@@ -198,8 +200,14 @@ def turn():
         finalWeight = [0 for i in range(0, board_size)]
         # Calculate the score for each of these, we then want the minimum score. Each one is found via Closest Opponent Pawn + friendly pawn count - opponent pawn count
         for i in range(0, board_size):
+            finalWeight[i] = closestOppPawn[i] + friendlyCount[i] - oppCount[i]
 
-                    
+        
+        minWeightLane = 0
+        for i in range(0, len(finalWeight)):
+            if finalWeight[i] < finalWeight[minWeightLane]:
+                minWeightLane = i
+
                     
         # Prioritizes placing where your enemies are closer than further away
         dlog("Closest Lane is " + str(closestOppPawnLane))
@@ -254,16 +262,20 @@ def turn():
                 diff = your_count - opp_count
 
         ## Go through each of the choices, testing to see if they're valid
-        if (check_space_wrapper(vert + forward, closestPawnLane - 1, board_size) == opp_team or check_space_wrapper(
-                vert + forward, closestPawnLane + 1, board_size) == opp_team) or check_space_wrapper(vert, closestPawnLane, board_size) or closestPawnLane == -1:
-            if (check_space_wrapper(vert + forward, biggestDiffLane - 1, board_size) == opp_team or check_space_wrapper(
-                vert + forward, biggestDiffLane + 1, board_size) == opp_team) or check_space_wrapper(vert, biggestDiffLane, board_size):
-                if last_resort != -1:
-                    col_to_place = last_resort
+        if (check_space_wrapper(vert + forward, minWeightLane - 1, board_size) == opp_team or check_space_wrapper(
+                vert + forward, minWeightLane + 1, board_size) == opp_team) or check_space_wrapper(vert, minWeightLane, board_size):
+            if (check_space_wrapper(vert + forward, closestPawnLane - 1, board_size) == opp_team or check_space_wrapper(
+                    vert + forward, closestPawnLane + 1, board_size) == opp_team) or check_space_wrapper(vert, closestPawnLane, board_size) or closestPawnLane == -1:
+                if (check_space_wrapper(vert + forward, biggestDiffLane - 1, board_size) == opp_team or check_space_wrapper(
+                    vert + forward, biggestDiffLane + 1, board_size) == opp_team) or check_space_wrapper(vert, biggestDiffLane, board_size):
+                    if last_resort != -1:
+                        col_to_place = last_resort
+                else:
+                    col_to_place = biggestDiffLane
             else:
-                col_to_place = biggestDiffLane
+                col_to_place = closestPawnLane
         else:
-            col_to_place = closestPawnLane
+            col_to_place = minWeightLane
 
         # dlog("Chosen: " + str(col_to_place))
         # TODO: Change to also evaluate the adjacent columns because they all contrib and spreading out troops is beneficial
