@@ -172,27 +172,33 @@ def turn():
         closestOppPawnDistance = board_size
 
         # Count the number of opponent pawns and friendly pawns on the board per column
-        oppCount = [0 for i in range(0, 15)]
-        friendlyCount = [0 for i in range(0, 15)]
+        oppCount = [0 for i in range(0, board_size)]
+        friendlyCount = [0 for i in range(0, board_size)]
 
         # Iterate through the lanes then rows, finding the lane with the opposing pawn closest to our spawn.,
         for lane in range(0,board_size):
             for row in range(vert+1, opp, forward):
-                closestFound = False
+                closestOppFound = False
+                closestFriendFound = False # TODO, implement using the closest friendly as a weight as well.
                 if check_space_wrapper(row, lane, board_size) == opp_team:
-                    if not closestFound:
+                    if not closestOppFound:
                         closestOppPawn[lane] = abs(row-vert)
                         # If a closer pawn is found, make this the new row.
                         if abs(row-vert) < closestOppPawnDistance:
                             closestOppPawnLane = lane
                             closestOppPawnDistance = abs(row-vert)
-                        closestFound = True
+                        closestOppFound = True
                     
                     # Update Counts
                     oppCount[lane] = oppCount[lane] + 1
                 elif check_space_wrapper(row, lane, board_size) == team:
                     # Update friendly counts
                     friendlyCount[lane] = friendlyCount[lane] + 1
+
+        finalWeight = [0 for i in range(0, board_size)]
+        # Calculate the score for each of these, we then want the minimum score. Each one is found via Closest Opponent Pawn + friendly pawn count - opponent pawn count
+        for i in range(0, board_size):
+
                     
                     
         # Prioritizes placing where your enemies are closer than further away
