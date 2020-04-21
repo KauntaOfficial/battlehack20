@@ -10,8 +10,10 @@ from battlehack20.stubs import *
 # This version of the bot uses the pawn code from version 23
 # Uses the spawning code from version 22
 
-DEBUG = 0
+DEBUG = 1
 
+global turnCount
+turnCount = 0
 
 def dlog(str):
     if DEBUG > 0:
@@ -29,6 +31,7 @@ def check_space_wrapper(r, c, board_size):
 
 
 def turn():
+    global turnCount
     """
     MUST be defined for robot to run
     This function will be called at the beginning of every turn and should contain the bulk of your robot commands
@@ -127,7 +130,7 @@ def turn():
             captureLeft = True
             # dlog('Captured at: (' + str(row + forward) + ', ' + str(col - 1) + ')')
 
-        #Check for the arrow pattern, meaning that you should not capture.
+        #Check for the arrow pattern, meaning that you should not capture. This one checks for the full arrow pattern.
         if (check_space_wrapper(row+forward, col, board_size) == opp_team and # Check right in front for an opponent
             check_space_wrapper(row, col+1, board_size) == opp_team and # Check to the right for an opponent
             check_space_wrapper(row, col-1, board_size) == opp_team and # Check to the left for an opponent
@@ -179,6 +182,8 @@ def turn():
 
 
     else:
+        turnCount += 1
+        dlog("turn number is "+ str(turnCount))
         # Where do we want to spawn the pawns? Center > Edges since you cover two spaces
         # Maybe check to see where the opponent spawned as black and then counter?
         # If you're white, want to go down a lane without any of your pawns not next to one already populated, if populated
@@ -208,6 +213,10 @@ def turn():
         col_to_place = -1
         col_to_place_weight = -1
 
+        friendlyPawnWeight = .1
+        if turnCount > 10:
+            friendlyPawnWeight = .01
+
         for col in range(0, board_size):
             col_weight = 0
             col_pawns = 0
@@ -217,7 +226,7 @@ def turn():
                 elif check_space(row, col) == team:
                     col_weight -= abs(row - vert)
                     col_pawns += 1
-            initial_weights[col] = col_weight - 0.1 * col_pawns
+            initial_weights[col] = col_weight - friendlyPawnWeight * col_pawns
 
         for i in range(0, board_size):
             adjusted_weights[i] = initial_weights[i]
