@@ -7,7 +7,7 @@ from battlehack20.stubs import *
 # when to push instead of eat, then you can defend and win. Also could be interesting strategy to
 # try and sneak some pawns down the side when the middle is locked up.
 
-DEBUG = 0
+DEBUG = 1
 
 
 def dlog(str):
@@ -114,6 +114,15 @@ def turn():
         # Make sure you push to the end if possible
         if row + forward == 0 or row + forward == board_size - 1:
             reinforce = False
+
+        # Set the left and right captures to true if possible, aka capture whenever possible, but will be falsified if following conditions apply.
+        if check_space_wrapper(row + forward, col + 1, board_size) == opp_team:  # up and right
+            captureRight = True
+            # dlog('Captured at: (' + str(row + forward) + ', ' + str(col + 1) + ')')
+
+        elif check_space_wrapper(row + forward, col - 1, board_size) == opp_team:  # up and left
+            captureLeft = True
+            # dlog('Captured at: (' + str(row + forward) + ', ' + str(col - 1) + ')')
 
         #Check for the arrow pattern, meaning that you should not capture.
         if (check_space_wrapper(row+forward, col, board_size) == opp_team and # Check right in front for an opponent
