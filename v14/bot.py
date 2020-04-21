@@ -7,8 +7,8 @@ from battlehack20.stubs import *
 # when to push instead of eat, then you can defend and win. Also could be interesting strategy to
 # try and sneak some pawns down the side when the middle is locked up.
 
-# Only changes made were to the spawning. Changed the first priority spawn to be the lane in which the enemy is closest.
-# This bot beats v7 handily on both sides
+# Only changes made were to the spawning. Derivative of v13, slightly punishes lanes where we have a heavy pawn advantage, encouraging the bot to spread spawns out more.
+
 
 DEBUG = 1
 
@@ -170,15 +170,34 @@ def turn():
         closestOppPawn = [board_size for i in range(0, board_size)]
         closestOppPawnLane = -1
         closestOppPawnDistance = board_size
+
+        # Count the number of opponent pawns and friendly pawns on the board per column
+        oppCount = [0 for i in range(0, 15)]
+        friendlyCount = [0 for i in range(0, 15)]
+
+        # Iterate through the lanes then rows, finding the lane with the opposing pawn closest to our spawn.,
         for lane in range(0,board_size):
-            for row in range(vert, opp, forward):
+            for row in range(vert+1, opp, forward):
+                closestFound = False
                 if check_space_wrapper(row, lane, board_size) == opp_team:
-                    closestOppPawn[lane] = abs(vert - row)
-                    if abs(vert-row) < closestOppPawnDistance:
-                        closestOppPawnLane = lane
-                        closestOppPawnDistance = abs(vert-row)
+                    if not closestFound:
+                        closestOppPawn[lane] = abs(row-vert)
+                        # If a closer pawn is found, make this the new row.
+                        if abs(row-vert) < closestOppPawnDistance:
+                            closestOppPawnLane = lane
+                            closestOppPawnDistance = abs(row-vert)
+                        closestFound = True
+                    
+                    # Update Counts
+                    oppCount[lane] = oppCount[lane] + 1
+                elif check_space_wrapper(row, lane, board_size) == team:
+                    # Update friendly counts
+                    friendlyCount[lane] = friendlyCount[lane] + 1
+                    
+                    
         # Prioritizes placing where your enemies are closer than further away
-        firstChoiceLane = closestOppPawnLane
+        dlog("Closest Lane is " + str(closestOppPawnLane))
+        closestPawnLane = closestOppPawnLane
 
         # If a lane is uncontested, clog it up
         priority_lane = -1
@@ -225,20 +244,20 @@ def turn():
             # Compare the previous differences to the new differences, taking the greater of the differences.
             if your_count - opp_count <= diff and not check_space(vert, col):
                 # This is the lane that you would want to choose second.
-                secondChoice = col
+                biggestDiffLane = col
                 diff = your_count - opp_count
 
         ## Go through each of the choices, testing to see if they're valid
-        if (check_space_wrapper(vert + forward, firstChoiceLane - 1, board_size) == opp_team or check_space_wrapper(
-                vert + forward, firstChoiceLane + 1, board_size) == opp_team) or check_space_wrapper(vert, firstChoiceLane, board_size) or firstChoiceLane == -1:
-            if (check_space_wrapper(vert + forward, secondChoice - 1, board_size) == opp_team or check_space_wrapper(
-                vert + forward, secondChoice + 1, board_size) == opp_team) or check_space_wrapper(vert, secondChoice, board_size):
+        if (check_space_wrapper(vert + forward, closestPawnLane - 1, board_size) == opp_team or check_space_wrapper(
+                vert + forward, closestPawnLane + 1, board_size) == opp_team) or check_space_wrapper(vert, closestPawnLane, board_size) or closestPawnLane == -1:
+            if (check_space_wrapper(vert + forward, biggestDiffLane - 1, board_size) == opp_team or check_space_wrapper(
+                vert + forward, biggestDiffLane + 1, board_size) == opp_team) or check_space_wrapper(vert, biggestDiffLane, board_size):
                 if last_resort != -1:
                     col_to_place = last_resort
             else:
-                col_to_place = secondChoice
+                col_to_place = biggestDiffLane
         else:
-            col_to_place = firstChoiceLane
+            col_to_place = closestPawnLane
 
         # dlog("Chosen: " + str(col_to_place))
         # TODO: Change to also evaluate the adjacent columns because they all contrib and spreading out troops is beneficial
@@ -248,7 +267,7 @@ def turn():
                 min_in_row += 1
 
         dlog("row before tests: " + str(col_to_place))
-        for test_col in range(col_to_place - 2, col_to_place + 2):
+        for test_col in range(col_to_place - 1, col_to_place + 1):
             if 0 > test_col or test_col > board_size - 1:
                 continue
             if check_space(vert, test_col):
