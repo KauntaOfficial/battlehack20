@@ -7,7 +7,7 @@ from battlehack20.stubs import *
 # when to push instead of eat, then you can defend and win. Also could be interesting strategy to
 # try and sneak some pawns down the side when the middle is locked up.
 
-DEBUG = 1
+DEBUG = 0
 
 
 def dlog(str):
