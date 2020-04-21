@@ -10,7 +10,7 @@ from battlehack20.stubs import *
 # This version of the bot uses the pawn code from version 23
 # Uses the spawning code from version 22
 
-DEBUG = 1
+DEBUG = 0
 
 
 def dlog(str):
@@ -217,7 +217,7 @@ def turn():
                 elif check_space(row, col) == team:
                     col_weight -= abs(row - vert)
                     col_pawns += 1
-            initial_weights[col] = col_weight - 0.1 * col_pawns
+            initial_weights[col] = col_weight - 0.142857 * col_pawns
 
         for i in range(0, board_size):
             adjusted_weights[i] = initial_weights[i]

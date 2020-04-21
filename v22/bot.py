@@ -165,7 +165,7 @@ def turn():
                 elif check_space(row, col) == team:
                     col_weight -= abs(row - vert)
                     col_pawns += 1
-            initial_weights[col] = col_weight - 0.1 * col_pawns
+            initial_weights[col] = col_weight - 0.142857 * col_pawns
 
         for i in range(0, board_size):
             adjusted_weights[i] = initial_weights[i]
