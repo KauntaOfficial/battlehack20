@@ -179,8 +179,6 @@ def turn():
             if i < board_size - 1:
                 adjusted_weights[i] = adjusted_weights[i] + 0.3 * initial_weights[i + 1]
 
-        # If a lane is uncontested, clog it up
-        priority_lane = -1
         # Last resort in case your lane is bad
         last_resort = -1
         for col in range(0, board_size):
@@ -192,22 +190,6 @@ def turn():
             if check_space_wrapper(vert + forward, col - 1, board_size) == opp_team or check_space_wrapper(
                     vert + forward, col + 1, board_size) == opp_team:
                 continue
-
-            # Checks to make sure there aren't any breakaway pawns
-            # Scans from your side to the other!
-            priority = False
-            for row in range(vert + forward, opp + forward, forward):
-                if check_space(row, col) == team:
-                    priority = False
-                    break
-                elif check_space(row, col) == opp_team:
-                    priority = True
-                    break
-
-            if priority and not check_space(vert, col):
-                priority_lane = col
-                # dlog("Found priority @ " + str(priority_lane))
-                break
 
             dlog("Weight of " + str(col) + " is " + str(adjusted_weights[col]))
             # If you're losing harder, then take it
@@ -233,7 +215,7 @@ def turn():
                 min_in_row += 1
 
         dlog("row before tests: " + str(col_to_place))
-        for test_col in range(col_to_place - 2, col_to_place + 2):
+        for test_col in range(col_to_place - 1, col_to_place + 1 + 1): # The extra plus one is so that range does not exlude the last pawn. Spread of 3.
             if 0 > test_col or test_col > board_size - 1:
                 continue
             if check_space(vert, test_col):
@@ -249,10 +231,7 @@ def turn():
 
         # dlog("row after tests: " + str(col_to_place))
         # If you find a priority lane with uncontested pawns, challenge it.
-        if priority_lane != -1:
-            dlog("Chose Priority: " + str(priority_lane))
-            spawn(vert, priority_lane)
-        elif 0 <= col_to_place <= board_size - 1 and not check_space(vert, col_to_place):
+        if 0 <= col_to_place <= board_size - 1 and not check_space(vert, col_to_place):
             dlog("Chose: " + str(col_to_place))
             spawn(vert, col_to_place)
 

@@ -176,7 +176,7 @@ def turn():
                          check_space_wrapper(row+(2*forward), col, board_size) == opp_team and
                          check_space_wrapper(row+(2*forward), col+1, board_size) == opp_team)
 
-        if frontThreeEmpty and threeReinforceRight and threeReinforceLeft and threeOppsFlat:
+        if frontThreeEmpty and threeReinforceRight and threeReinforceLeft and threeOppsFlat and abs(vert - row) <= 8:
             push = True
         
         
@@ -189,7 +189,7 @@ def turn():
         tailPresent = check_space_wrapper(row+(forward*-1), col, board_size) == team and check_space_wrapper(row+(forward*-1), col, board_size) == team
 
         # Check for both of the previous conditions as well as checking if the space in front is open.
-        if arrowPresent and tailPresent and not check_space_wrapper(row+forward, col, board_size):
+        if arrowPresent and tailPresent and not check_space_wrapper(row+forward, col, board_size) and abs(vert - row) <= 8:
             push = True
 
 
