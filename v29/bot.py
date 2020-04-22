@@ -174,7 +174,7 @@ def turn():
         for i in range(board_size):
             dlog(str(i) + " " + str(threat_level[i]))
         col_to_place = -1
-        max_col_threat = -1
+        max_col_threat = threat_level[0]
 
         # Last resort in case your lane is bad
         last_resort = -1
@@ -192,7 +192,7 @@ def turn():
             if not check_space(vert, col):
                 if col_to_place == -1:
                     col_to_place = col
-                    col_threat = threat_level[col]
+                    max_col_threat = threat_level[col]
                 elif threat_level[col] > max_col_threat:
                     max_col_threat = col
                     max_col_threat = threat_level[col]
@@ -208,6 +208,7 @@ def turn():
             if check_space_wrapper(i, col_to_place, board_size) == team:
                 min_in_center += 1
 
+        '''
         center = col_to_place
         min_in_side = 100
         if col_to_place <= 7:
@@ -238,6 +239,7 @@ def turn():
                 if in_row <= min_in_center and in_row <= min_in_side:
                     col_to_place = test_col
                     min_in_side = in_row
+        '''
 
         dlog("Threat level of " + str(col_to_place) + " is " + str(threat_level[col_to_place]))
         # dlog("row after tests: " + str(col_to_place))

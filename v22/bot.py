@@ -165,14 +165,9 @@ def turn():
                 elif check_space(row, col) == team:
                     col_weight -= abs(row - vert)
                     col_pawns += 1
-            initial_weights[col] = col_weight - 0.142857 * col_pawns
 
         for i in range(0, board_size):
             adjusted_weights[i] = initial_weights[i]
-            if i > 0:
-                adjusted_weights[i] = adjusted_weights[i] + 1/2 * initial_weights[i - 1]
-            if i < board_size - 1:
-                adjusted_weights[i] = adjusted_weights[i] + 1/2 * initial_weights[i + 1]
 
         # If a lane is uncontested, clog it up
         priority_lane = -1
