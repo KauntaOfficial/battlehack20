@@ -154,15 +154,19 @@ def turn():
         # First, pick a decent enough col to start off with
         pawn_diff = [0 for i in range(0, board_size)]
         threat_level = [0 for i in range(0, board_size)]
+        enemy_pawns = [0 for i in range(0, board_size)]
 
         for col in range(0, board_size):
             col_pawns = 0
+            enemy = 0
             for row in range(0, board_size):
                 if check_space(row, col) == opp_team:
                     col_pawns += 1
+                    enemy += 1
                 elif check_space(row, col) == team:
                     col_pawns -= 1
             pawn_diff[col] = col_pawns
+            enemy_pawns[col] = enemy
 
         for i in range(0, board_size):
             threat_level[i] = pawn_diff[i]
@@ -194,7 +198,7 @@ def turn():
                 if col_to_place == -1:
                     col_to_place = col
                     max_col_threat = threat_level[col]
-                elif threat_level[col] > max_col_threat:
+                elif threat_level[col] > max_col_threat or (threat_level[col] == max_col_threat and enemy_pawns[col] > enemy_pawns[col_to_place]):
                     col_to_place = col
                     max_col_threat = threat_level[col]
 
@@ -213,8 +217,8 @@ def turn():
         min_in_side = 100
         dlog("initial: " + str(col_to_place))
         if col_to_place <= 7:
-            for test_col in range(col_to_place - 1,
-                                  col_to_place + 2):  # The extra plus one is so that range does not exlude the last pawn. Spread of 3.
+            for test_col in range(center - 1,
+                                  center + 2):  # The extra plus one is so that range does not exlude the last pawn. Spread of 3.
                 if 0 > test_col or test_col > board_size - 1:
                     continue
                 if check_space(vert, test_col) or test_col == center:
@@ -229,13 +233,18 @@ def turn():
                     min_in_side = in_row
                 dlog("In comp: " + str(in_row))
         else:
-            for test_col in range(col_to_place + 1, col_to_place - 2,
+            for test_col in range(center + 1, center - 2,
                                   -1):  # The extra plus one is so that range does not exlude the last pawn. Spread of 3.
                 if 0 > test_col or test_col > board_size - 1:
                     continue
+<<<<<<< HEAD
                 if check_space(vert, test_col) or test_col == center:
+=======
+                if check_space(vert, test_col) and test_col == center:
+>>>>>>> 784e33b7928d394a4c98c3df06581eb0595cd5c2
                     continue
 
+                dlog("Checking " + str(test_col))
                 in_row = 0
                 for row in range(0, board_size):
                     if check_space_wrapper(row, test_col, board_size) == team:
@@ -243,6 +252,7 @@ def turn():
                 if in_row <= min_in_center and in_row <= min_in_side:
                     col_to_place = test_col
                     min_in_side = in_row
+                dlog("In comp2: " + str(in_row))
 
         dlog("Threat level of " + str(col_to_place) + " is " + str(threat_level[col_to_place]))
         # dlog("row after tests: " + str(col_to_place))
