@@ -169,7 +169,7 @@ def turn():
             if i > 0:
                 threat_level[i] = threat_level[i] + pawn_diff[i - 1]
             if i < board_size - 1:
-                threat_level[i] = threat_level[i] + 0.3 * pawn_diff[i + 1]
+                threat_level[i] = threat_level[i] + pawn_diff[i + 1]
 
         col_to_place = -1
         col_threat = -1
