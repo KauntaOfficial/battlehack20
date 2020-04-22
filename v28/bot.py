@@ -237,11 +237,7 @@ def turn():
                                   -1):  # The extra plus one is so that range does not exlude the last pawn. Spread of 3.
                 if 0 > test_col or test_col > board_size - 1:
                     continue
-<<<<<<< HEAD
                 if check_space(vert, test_col) or test_col == center:
-=======
-                if check_space(vert, test_col) and test_col == center:
->>>>>>> 784e33b7928d394a4c98c3df06581eb0595cd5c2
                     continue
 
                 dlog("Checking " + str(test_col))
