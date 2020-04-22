@@ -10,7 +10,7 @@ from battlehack20.stubs import *
 # This version of the bot uses the pawn code from version 20
 # Uses the most up to date spawning as of version 26
 
-DEBUG = 1
+DEBUG = 0
 
 
 def dlog(str):
@@ -152,31 +152,50 @@ def turn():
             forward = -1
 
         # First, pick a decent enough col to start off with
-        pawn_diff = [0 for i in range(0, board_size)]
         threat_level = [0 for i in range(0, board_size)]
         enemy_pawns = [0 for i in range(0, board_size)]
+        ally_pawns = [0 for i in range(0, board_size)]
+        pressures = [0 for i in range(0, board_size)]
 
         for col in range(0, board_size):
             col_pawns = 0
             enemy = 0
+            pressure = 0
+            ally = 0
             for row in range(0, board_size):
                 if check_space(row, col) == opp_team:
-                    col_pawns += 1
+                    pressure += abs(row - opp) + 1
                     enemy += 1
                 elif check_space(row, col) == team:
-                    col_pawns -= 1
-            pawn_diff[col] = col_pawns
+                    pressure += abs(row - vert) + 1
+                    ally += 1
             enemy_pawns[col] = enemy
+            ally_pawns[col] = ally
+            pressures[col] = pressure
+            total_ally_pawns = ally
+
+        # + for opp
+        for i in range(0, board_size):
+            if i > 0:
+                if ally_pawns[i] >= enemy_pawns[i - 1]:
+                    ally_pawns[i] = ally_pawns[i] - enemy_pawns[i - 1]
+                    enemy_pawns[i - 1] = 0
+                else:
+                    enemy_pawns[i - 1] = enemy_pawns[i - 1] - ally_pawns[i]
+                    ally_pawns[i] = 0
+            if i < board_size - 1:
+                if ally_pawns[i] >= enemy_pawns[i + 1]:
+                    ally_pawns[i] = ally_pawns[i] - enemy_pawns[i + 1]
+                    enemy_pawns[i + 1] = 0
+                else:
+                    enemy_pawns[i + 1] = enemy_pawns[i + 1] - ally_pawns[i]
+                    ally_pawns[i] = 0
 
         for i in range(0, board_size):
-            threat_level[i] = pawn_diff[i]
-            if i > 0:
-                threat_level[i] = threat_level[i] + pawn_diff[i - 1]
-            if i < board_size - 1:
-                threat_level[i] = threat_level[i] + pawn_diff[i + 1]
+            threat_level[i] = enemy_pawns[i] - ally_pawns[i]
 
         for i in range(board_size):
-            dlog(str(i) + " " + str(pawn_diff[i]) + " " + str(threat_level[i]))
+            dlog(str(i) + " " + str(enemy_pawns[i]) + " " + str(ally_pawns[i]) + " " + str(threat_level[i]))
 
         col_to_place = -1
         max_col_threat = -1
@@ -185,9 +204,9 @@ def turn():
         # last_resort = -1
         for col in range(0, board_size):
             # if check_space(opp, col) == team:
-                # if (col > 0 and check_space(vert + forward, col - 1) != opp_team) and (
-                #         col < board_size - 1 and check_space(vert + forward, col + 1) != opp_team):
-                #     last_resort = col
+            # if (col > 0 and check_space(vert + forward, col - 1) != opp_team) and (
+            #         col < board_size - 1 and check_space(vert + forward, col + 1) != opp_team):
+            #     last_resort = col
             # Don't spawn if you instantly get eaten
             if check_space_wrapper(vert + forward, col - 1, board_size) == opp_team or check_space_wrapper(
                     vert + forward, col + 1, board_size) == opp_team:
@@ -198,15 +217,16 @@ def turn():
                 if col_to_place == -1:
                     col_to_place = col
                     max_col_threat = threat_level[col]
-                elif threat_level[col] > max_col_threat or (threat_level[col] == max_col_threat and enemy_pawns[col] > enemy_pawns[col_to_place]):
+                elif threat_level[col] > max_col_threat or (
+                        threat_level[col] == max_col_threat and (ally_pawns[col] < ally_pawns[col_to_place] or pressures[col] < pressures[col_to_place])):
                     col_to_place = col
                     max_col_threat = threat_level[col]
 
         # If chosen spot is eaten, then you want to go to your last resort which should be behind a won lane
         # if check_space_wrapper(vert + forward, col_to_place - 1, board_size) == opp_team or check_space_wrapper(
-            #     vert + forward, col_to_place + 1, board_size) == opp_team:
-            # if last_resort != -1:
-            #     col_to_place = last_resort
+        #     vert + forward, col_to_place + 1, board_size) == opp_team:
+        # if last_resort != -1:
+        #     col_to_place = last_resort
 
         min_in_center = 0
         for i in range(0, board_size):
@@ -221,8 +241,11 @@ def turn():
                                   center + 2):  # The extra plus one is so that range does not exlude the last pawn. Spread of 3.
                 if 0 > test_col or test_col > board_size - 1:
                     continue
-                if check_space(vert, test_col) or test_col == center:
+                elif check_space(vert, test_col) or test_col == center:
+                    dlog(str(test_col) + " is taken")
                     continue
+
+                dlog(str(check_space(vert, test_col)))
                 dlog("Checking " + str(test_col))
                 in_row = 0  # Place the new pawn on the side of the threat level with the least amount of friendly pawns
                 for row in range(0, board_size):
@@ -237,8 +260,11 @@ def turn():
                                   -1):  # The extra plus one is so that range does not exlude the last pawn. Spread of 3.
                 if 0 > test_col or test_col > board_size - 1:
                     continue
-                if check_space(vert, test_col) and test_col == center:
+                elif check_space(vert, test_col) or test_col == center:
+                    dlog(str(test_col) + " is taken")
                     continue
+
+                dlog(str(check_space(vert, test_col)))
 
                 dlog("Checking " + str(test_col))
                 in_row = 0
@@ -251,6 +277,7 @@ def turn():
                 dlog("In comp2: " + str(in_row))
 
         dlog("Threat level of " + str(col_to_place) + " is " + str(threat_level[col_to_place]))
+
         # dlog("row after tests: " + str(col_to_place))
         # If you find a priority lane with uncontested pawns, challenge it.
         if 0 <= col_to_place <= board_size - 1 and not check_space(vert, col_to_place):
