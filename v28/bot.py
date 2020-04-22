@@ -218,7 +218,7 @@ def turn():
                     col_to_place = col
                     max_col_threat = threat_level[col]
                 elif threat_level[col] > max_col_threat or (
-                        threat_level[col] == max_col_threat and (ally_pawns[col] < ally_pawns[col_to_place] or pressures[col] < pressures[col_to_place])):
+                        threat_level[col] == max_col_threat and (ally_pawns[col] < ally_pawns[col_to_place] or pressures[col] > pressures[col_to_place])):
                     col_to_place = col
                     max_col_threat = threat_level[col]
 
