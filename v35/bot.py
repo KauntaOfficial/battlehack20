@@ -10,7 +10,7 @@ from battlehack20.stubs import *
 # This version of the bot uses the pawn code from version 20
 # Uses the most up to date spawning as of version 26
 
-DEBUG = 0
+DEBUG = 1
 
 
 def dlog(str):
@@ -177,7 +177,6 @@ def turn():
             pressures[col] = pressure
             total_ally_pawns = ally
 
-        redistroAllyPawns = ally_pawns
 
         # + for opp
         for i in range(0, board_size):
@@ -207,9 +206,15 @@ def turn():
 
         allThreatsEqual = True
         baseThreat = threat_level[0]
+        dlog(str(baseThreat))
         for i in range(0, len(threat_level)):
-            if threat_level[i] == baseThreat and allThreatsEqual:
+            if threat_level[i] != baseThreat and allThreatsEqual:
                 allThreatsEqual = False
+
+        if allThreatsEqual:
+            dlog("All Threats are equal")
+        else:
+            dlog("threats are uneven")
 
         # Last resort in case your lane is bad
         # last_resort = -1
@@ -329,21 +334,22 @@ def turn():
         # If the threat level towards all of the pieces is equal, ignore all of the 2000 lines of code we did to determine where to place it, 
         # Place the piece in a row that's completely empty, and where neither of the surrounding lanes have any friendlies
         # Propogate from the center outwards for this.
-        outFromMiddle = 0
-        midBoard = int(board_size / 2)
-        for i in range(0, board_size - 2):
-            if i % 2 == 0:
-                checking = midBoard + outFromMiddle
-                if redistroAllyPawns[checking] == 0 and redistroAllyPawns[checking+1] == 0 and redistroAllyPawns[checking-1] == 0:
-                    col_to_place = checking
-                    break
-            
-            else:
-                outFromMiddle += 1
-                checking = midBoard - outFromMiddle
-                if redistroAllyPawns[checking] == 0 and redistroAllyPawns[checking+1] == 0 and redistroAllyPawns[checking-1] == 0:
-                    col_to_place = checking
-                    break
+        if allThreatsEqual:
+            outFromMiddle = 0
+            midBoard = int(board_size / 2)
+            for i in range(0, board_size - 2):
+                if i % 2 == 0:
+                    checking = midBoard + outFromMiddle
+                    if redistroAllyPawns[checking] == 0 and redistroAllyPawns[checking+1] == 0 and redistroAllyPawns[checking-1] == 0:
+                        col_to_place = checking
+                        break
+                
+                else:
+                    outFromMiddle += 1
+                    checking = midBoard - outFromMiddle
+                    if redistroAllyPawns[checking] == 0 and redistroAllyPawns[checking+1] == 0 and redistroAllyPawns[checking-1] == 0:
+                        col_to_place = checking
+                        break
 
 
 
