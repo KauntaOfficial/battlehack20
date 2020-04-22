@@ -10,7 +10,7 @@ from battlehack20.stubs import *
 # This version of the bot uses the pawn code from version 23
 # Uses the spawning code from version 22
 
-DEBUG = 1
+DEBUG = 0
 
 global turnCount
 turnCount = 0
@@ -179,6 +179,19 @@ def turn():
         if frontThreeEmpty and threeReinforceRight and threeReinforceLeft and threeOppsFlat:
             push = True
         
+        
+        # If this pawn is the pawn behind a forwards facing arrow, push forward to take territory.
+        arrowPresent = (check_space_wrapper(row+(forward*2), col, board_size) == team and # The head of the arrow
+                        check_space_wrapper(row+forward, col+1, board_size) == team and # The right side of the arrow
+                        check_space_wrapper(row+forward, col-1, board_size) == team) # Left side of the arrow
+        
+        # Check to see if there are at least 2 pawns behind current pawn.
+        tailPresent = check_space_wrapper(row+(forward*-1), col, board_size) == team and check_space_wrapper(row+(forward*-1), col, board_size) == team
+
+        # Check for both of the previous conditions as well as checking if the space in front is open.
+        if arrowPresent and tailPresent and not check_space_wrapper(row+forward, col, board_size):
+            push = True
+
 
         # Choose which capture to prioritize, left or right, based on whether pawns are ready to trade on either side.
         rightTrades = 0
@@ -250,9 +263,9 @@ def turn():
         col_to_place = -1
         col_to_place_weight = -1
 
-        friendlyPawnWeight = .1
+        friendlyPawnWeight = .2
         if turnCount > 10:
-            friendlyPawnWeight = .001
+            friendlyPawnWeight = .2
 
         for col in range(0, board_size):
             col_weight = 0
@@ -263,16 +276,16 @@ def turn():
                 elif check_space(row, col) == team:
                     col_weight -= abs(row - vert)
                     col_pawns += 1
-            initial_weights[col] = col_weight - friendlyPawnWeight * col_pawns
+            initial_weights[col] = col_weight - (friendlyPawnWeight * col_pawns)
             if 1 <= col <= board_size - 2:
                 initial_weights[col] = initial_weights[col] + 0.01
 
         for i in range(0, board_size):
             adjusted_weights[i] = initial_weights[i]
             if i > 0:
-                adjusted_weights[i] = adjusted_weights[i] + 1 / 2 * initial_weights[i - 1]
+                adjusted_weights[i] = adjusted_weights[i] + (.3 * initial_weights[i - 1])
             if i < board_size - 1:
-                adjusted_weights[i] = adjusted_weights[i] + 1 / 2 * initial_weights[i + 1]
+                adjusted_weights[i] = adjusted_weights[i] + (.3 * initial_weights[i + 1])
 
         # If a lane is uncontested, clog it up
         priority_lane = -1
