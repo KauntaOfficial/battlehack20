@@ -10,7 +10,7 @@ from battlehack20.stubs import *
 # This version of the bot uses the pawn code from version 20
 # Uses the most up to date spawning as of version 26
 
-DEBUG = 0
+DEBUG = 1
 
 
 def dlog(str):
@@ -265,7 +265,7 @@ def turn():
                 for row in range(0, board_size):
                     if check_space_wrapper(row, test_col, board_size) == team:
                         in_row += 1
-                if in_row < min_in_center and in_row <= min_in_side: ## All i changed in v33 was changing the first <= to just <
+                if in_row <= min_in_center and in_row <= min_in_side: 
                     col_to_place = test_col
                     min_in_side = in_row
                 dlog("In comp: " + str(in_row))
@@ -285,7 +285,7 @@ def turn():
                 for row in range(0, board_size):
                     if check_space_wrapper(row, test_col, board_size) == team:
                         in_row += 1
-                if in_row < min_in_center and in_row <= min_in_side: ## Same thing down here.
+                if in_row <= min_in_center and in_row <= min_in_side: 
                     col_to_place = test_col
                     min_in_side = in_row
                 dlog("In comp2: " + str(in_row))
@@ -357,6 +357,23 @@ def turn():
         if 0 <= col_to_place <= board_size - 1 and not check_space(vert, col_to_place):
             dlog("Chose: " + str(col_to_place))
             spawn(vert, col_to_place)
+        else: # If the chosen space does not work, iterate through the board from the middle to the outside to pick a spot.
+            outFromMiddle = 0
+            midBoard = int(board_size / 2)
+            for i in range(0, board_size):
+                if i % 2 == 0:
+                    checking = midBoard + outFromMiddle
+                    try:
+                        spawn(vert, checking)
+                    except:
+                        continue
+                else:
+                    outFromMiddle += 1
+                    checking = midBoard - outFromMiddle
+                    try:
+                        spawn(vert, checking)
+                    except:
+                        continue
 
     bytecode = get_bytecode()
     # dlog('Done! Bytecode left: ' + str(bytecode))

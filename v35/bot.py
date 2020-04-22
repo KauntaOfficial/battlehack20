@@ -43,6 +43,16 @@ def turn():
     robottype = get_type()
     # dlog('Type: ' + str(robottype))
 
+    if team == Team.WHITE:
+        vert = 0
+        # Tracks the base of the opponent
+        opp = board_size - 1
+        white = True
+    else:
+        vert = board_size - 1
+        opp = 0
+        white = False
+
     if robottype == RobotType.PAWN:
         row, col = get_location()
         # dlog('My location is: ' + str(row) + ' ' + str(col))
