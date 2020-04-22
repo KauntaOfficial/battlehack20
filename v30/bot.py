@@ -10,7 +10,7 @@ from battlehack20.stubs import *
 # This version of the bot uses the pawn code from version 20
 # Uses the most up to date spawning as of version 26
 
-DEBUG = 0
+DEBUG = 1
 
 
 def dlog(str):
@@ -174,6 +174,7 @@ def turn():
             pressures[col] = pressure
             total_ally_pawns = ally
 
+
         # + for opp
         for i in range(0, board_size):
             if i > 0:
@@ -197,7 +198,7 @@ def turn():
         for i in range(board_size):
             dlog(str(i) + " " + str(enemy_pawns[i]) + " " + str(ally_pawns[i]) + " " + str(threat_level[i]))
 
-        col_to_place = -1
+        col_to_place = 7
         max_col_threat = -1
 
         # Last resort in case your lane is bad
@@ -230,8 +231,20 @@ def turn():
 
         ### This version uses only v29 spread instead of both v28 and v29 spread
 
+        # Find the number of allied pawns in each column, for use in redistribution.
+        redistroAllyPawns = [0 for i in range(0, board_size)]
+        for lane in range(0, board_size):
+            allyCount = 0
+            for r in range(0, board_size):
+                if check_space_wrapper(r, lane, board_size) == team:
+                    allyCount += 1
+            redistroAllyPawns[lane] = allyCount
+            
+        dlog("Distro of frienlies is "+ str(redistroAllyPawns))
+
         # If there is a neighboring lane with fewer friendly pawns, choose that one.
-        minFriendlies = ally_pawns[col_to_place]
+        minFriendlies = redistroAllyPawns[col_to_place]
+        dlog(str(minFriendlies) + " is the number of friendlies in lane " + str(col_to_place))
         center = col_to_place
         if center <= 7:
             for test in range(center + 1, center - 2, -1): # Iterate through the options from inside to outside
@@ -241,8 +254,8 @@ def turn():
                     dlog(str(test) + " is taken")
                     continue
 
-                if ally_pawns[test] < minFriendlies:
-                    minFriendlies = ally_pawns[test]
+                if redistroAllyPawns[test] < minFriendlies:
+                    minFriendlies = redistroAllyPawns[test]
                     col_to_place = test
         else:
             for test in range(center - 1 , center + 2): # Iterate through the options from inside to outside
@@ -252,8 +265,8 @@ def turn():
                     dlog(str(test) + " is taken")
                     continue
 
-                if ally_pawns[test] < minFriendlies:
-                    minFriendlies = ally_pawns[test]
+                if redistroAllyPawns[test] < minFriendlies:
+                    minFriendlies = redistroAllyPawns[test]
                     col_to_place = test
 
         dlog("Threat level of " + str(col_to_place) + " is " + str(threat_level[col_to_place]))

@@ -174,6 +174,8 @@ def turn():
             pressures[col] = pressure
             total_ally_pawns = ally
 
+        redistroAllyPawns = ally_pawns
+
         # + for opp
         for i in range(0, board_size):
             if i > 0:
@@ -276,8 +278,20 @@ def turn():
                     min_in_side = in_row
                 dlog("In comp2: " + str(in_row))
 
+        # Find the number of allied pawns in each column, for use in redistribution.
+        redistroAllyPawns = [0 for i in range(0, board_size)]
+        for lane in range(0, board_size):
+            allyCount = 0
+            for r in range(0, board_size):
+                if check_space_wrapper(r, lane, board_size) == team:
+                    allyCount += 1
+            redistroAllyPawns[lane] = allyCount
+            
+        dlog("Distro of frienlies is "+ str(redistroAllyPawns))
+
         # If there is a neighboring lane with fewer friendly pawns, choose that one.
-        minFriendlies = ally_pawns[col_to_place]
+        minFriendlies = redistroAllyPawns[col_to_place]
+        dlog(str(minFriendlies) + " is the number of friendlies in lane " + str(col_to_place))
         center = col_to_place
         if center <= 7:
             for test in range(center + 1, center - 2, -1): # Iterate through the options from inside to outside
@@ -287,8 +301,8 @@ def turn():
                     dlog(str(test) + " is taken")
                     continue
 
-                if ally_pawns[test] < minFriendlies:
-                    minFriendlies = ally_pawns[test]
+                if redistroAllyPawns[test] < minFriendlies:
+                    minFriendlies = redistroAllyPawns[test]
                     col_to_place = test
         else:
             for test in range(center - 1 , center + 2): # Iterate through the options from inside to outside
@@ -298,8 +312,8 @@ def turn():
                     dlog(str(test) + " is taken")
                     continue
 
-                if ally_pawns[test] < minFriendlies:
-                    minFriendlies = ally_pawns[test]
+                if redistroAllyPawns[test] < minFriendlies:
+                    minFriendlies = redistroAllyPawns[test]
                     col_to_place = test
 
         dlog("Threat level of " + str(col_to_place) + " is " + str(threat_level[col_to_place]))
