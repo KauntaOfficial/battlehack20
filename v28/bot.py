@@ -10,7 +10,7 @@ from battlehack20.stubs import *
 # This version of the bot uses the pawn code from version 20
 # Uses the most up to date spawning as of version 26
 
-DEBUG = 0
+DEBUG = 1
 
 
 def dlog(str):
@@ -162,6 +162,7 @@ def turn():
                     col_pawns += 1
                 elif check_space(row, col) == team:
                     col_pawns -= 1
+            pawn_diff[col] = col_pawns
 
         for i in range(0, board_size):
             threat_level[i] = pawn_diff[i]
@@ -234,6 +235,7 @@ def turn():
                     col_to_place = test_col
                     min_in_row = in_row
 
+        dlog("Threat level of " + str(col_to_place) + " is " + str(threat_level[col_to_place]))
         # dlog("row after tests: " + str(col_to_place))
         # If you find a priority lane with uncontested pawns, challenge it.
         if 0 <= col_to_place <= board_size - 1 and not check_space(vert, col_to_place):
