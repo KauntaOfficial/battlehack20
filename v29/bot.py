@@ -283,8 +283,8 @@ def turn():
             for test in range(center + 1, center - 2, -1): # Iterate through the options from inside to outside
                 if 0 > test or test >= board_size:
                     continue
-                elif check_space(vert, test_col) or test_col == center:
-                    dlog(str(test_col) + " is taken")
+                elif check_space(vert, test) or test == center:
+                    dlog(str(test) + " is taken")
                     continue
 
                 if ally_pawns[test] < minFriendlies:
@@ -294,8 +294,8 @@ def turn():
             for test in range(center - 1 , center + 2): # Iterate through the options from inside to outside
                 if 0 > test or test >= board_size:
                     continue
-                elif check_space(vert, test_col) or test_col == center:
-                    dlog(str(test_col) + " is taken")
+                elif check_space(vert, test) or test == center:
+                    dlog(str(test) + " is taken")
                     continue
 
                 if ally_pawns[test] < minFriendlies:
