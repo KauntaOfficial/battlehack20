@@ -10,8 +10,10 @@ from battlehack20.stubs import *
 # This version of the bot uses the pawn code from version 23
 # Uses the spawning code from version 22
 
-DEBUG = 1
+DEBUG = 0
 
+global turnCount
+turnCount = 0
 
 def dlog(str):
     if DEBUG > 0:
@@ -29,6 +31,7 @@ def check_space_wrapper(r, c, board_size):
 
 
 def turn():
+    global turnCount
     """
     MUST be defined for robot to run
     This function will be called at the beginning of every turn and should contain the bulk of your robot commands
@@ -42,6 +45,16 @@ def turn():
 
     robottype = get_type()
     # dlog('Type: ' + str(robottype))
+
+    if team == Team.WHITE:
+        vert = 0
+        # Tracks the base of the opponent
+        opp = board_size - 1
+        white = True
+    else:
+        vert = board_size - 1
+        opp = 0
+        white = False
 
     if robottype == RobotType.PAWN:
         row, col = get_location()
@@ -128,16 +141,57 @@ def turn():
             captureLeft = True
             # dlog('Captured at: (' + str(row + forward) + ', ' + str(col - 1) + ')')
 
-        # Check for the arrow pattern, meaning that you should not capture.
-        if (check_space_wrapper(row + forward, col, board_size) == opp_team and  # Check right in front for an opponent
-                check_space_wrapper(row, col + 1, board_size) == opp_team and  # Check to the right for an opponent
-                check_space_wrapper(row, col - 1, board_size) == opp_team and  # Check to the left for an opponent
-                check_space_wrapper(row + (forward * -1), col + 1,
-                                    board_size) == team and  # Check one back and to the right for a friendly
-                check_space_wrapper(row + (forward * -1), col - 1,
-                                    board_size) == team):  # Check one back and to the left for a friendly
+        #Check for the arrow pattern, meaning that you should not capture. This one checks for the full arrow pattern.
+        if (check_space_wrapper(row+forward, col, board_size) == opp_team and # Check right in front for an opponent
+            check_space_wrapper(row, col+1, board_size) == opp_team and # Check to the right for an opponent
+            check_space_wrapper(row, col-1, board_size) == opp_team and # Check to the left for an opponent
+            check_space_wrapper(row+(forward*-1), col+1, board_size) == team and # Check one back and to the right for a friendly
+            check_space_wrapper(row+(forward*-1), col-1, board_size) == team): # Check one back and to the left for a friendly
             captureLeft = False
             captureRight = False
+
+        # Version of the same previous check, except more flexible, but only happenning if the pawn is past the midpoint.
+        if (check_space_wrapper(row+forward, col, board_size) == opp_team and # Check for opp right in front
+            (check_space_wrapper(row+(forward*-1), col+1, board_size) == team or # Check for reinforcement to the right
+            check_space_wrapper(row+(forward*-1), col-1, board_size) == team) and # check for reinforcement to the left
+            abs(vert - row) >= 8):
+            captureRight = False
+            captureRight = False
+
+        # Checks to see if we are in a flat vs flat stalemate, and breaks it if possible.
+        # Check to see if the 3 spaces in front of the pawn are empty
+        frontThreeEmpty = (not check_space_wrapper(row+forward, col-1, board_size) and
+                           not check_space_wrapper(row+forward, col, board_size) and
+                           not check_space_wrapper(row+forward, col+1, board_size))
+        # Checks to see if the 3 pawns to the right and back of it exist
+        threeReinforceRight = (check_space_wrapper(row, col+1, board_size) == team and
+                               check_space_wrapper(row+(forward*-1), col+1, board_size) == team and
+                               check_space_wrapper(row+(forward*-2), col+1, board_size) == team)
+        # Check to see if the 3 pawns to the left and back of it exist
+        threeReinforceLeft = (check_space_wrapper(row, col-1, board_size) == team and
+                             check_space_wrapper(row+(forward*-1), col-1, board_size) == team and
+                             check_space_wrapper(row+(forward*-2), col-1, board_size) == team)
+        # Check to see if the 3 opponents in a flat position ahead exist
+        threeOppsFlat = (check_space_wrapper(row+(2*forward), col-1, board_size) == opp_team and
+                         check_space_wrapper(row+(2*forward), col, board_size) == opp_team and
+                         check_space_wrapper(row+(2*forward), col+1, board_size) == opp_team)
+
+        if frontThreeEmpty and threeReinforceRight and threeReinforceLeft and threeOppsFlat:
+            push = True
+        
+        
+        # If this pawn is the pawn behind a forwards facing arrow, push forward to take territory.
+        arrowPresent = (check_space_wrapper(row+(forward*2), col, board_size) == team and # The head of the arrow
+                        check_space_wrapper(row+forward, col+1, board_size) == team and # The right side of the arrow
+                        check_space_wrapper(row+forward, col-1, board_size) == team) # Left side of the arrow
+        
+        # Check to see if there are at least 2 pawns behind current pawn.
+        tailPresent = check_space_wrapper(row+(forward*-1), col, board_size) == team and check_space_wrapper(row+(forward*-1), col, board_size) == team
+
+        # Check for both of the previous conditions as well as checking if the space in front is open.
+        if arrowPresent and tailPresent and not check_space_wrapper(row+forward, col, board_size):
+            push = True
+
 
         # Choose which capture to prioritize, left or right, based on whether pawns are ready to trade on either side.
         rightTrades = 0
@@ -186,19 +240,13 @@ def turn():
 
 
     else:
+        turnCount += 1
+        dlog("turn number is "+ str(turnCount))
         # Where do we want to spawn the pawns? Center > Edges since you cover two spaces
         # Maybe check to see where the opponent spawned as black and then counter?
         # If you're white, want to go down a lane without any of your pawns not next to one already populated, if populated
         # then you want to just fill a row you already have
-        if team == Team.WHITE:
-            vert = 0
-            # Tracks the base of the opponent
-            opp = board_size - 1
-            white = True
-        else:
-            vert = board_size - 1
-            opp = 0
-            white = False
+        
 
         # Optimizations:
         # - Don't place if row is won
@@ -215,6 +263,10 @@ def turn():
         col_to_place = -1
         col_to_place_weight = -1
 
+        friendlyPawnWeight = .2
+        if turnCount > 10:
+            friendlyPawnWeight = .2
+
         for col in range(0, board_size):
             col_weight = 0
             col_pawns = 0
@@ -224,16 +276,16 @@ def turn():
                 elif check_space(row, col) == team:
                     col_weight -= abs(row - vert)
                     col_pawns += 1
-            initial_weights[col] = col_weight - 0.1 * col_pawns
+            initial_weights[col] = col_weight - (friendlyPawnWeight * col_pawns)
             if 1 <= col <= board_size - 2:
                 initial_weights[col] = initial_weights[col] + 0.01
 
         for i in range(0, board_size):
             adjusted_weights[i] = initial_weights[i]
             if i > 0:
-                adjusted_weights[i] = adjusted_weights[i] + 1 / 2 * initial_weights[i - 1]
+                adjusted_weights[i] = adjusted_weights[i] + (.3 * initial_weights[i - 1])
             if i < board_size - 1:
-                adjusted_weights[i] = adjusted_weights[i] + 1 / 2 * initial_weights[i + 1]
+                adjusted_weights[i] = adjusted_weights[i] + (.3 * initial_weights[i + 1])
 
         # If a lane is uncontested, clog it up
         priority_lane = -1
