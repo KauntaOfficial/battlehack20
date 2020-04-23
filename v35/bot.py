@@ -10,7 +10,7 @@ from battlehack20.stubs import *
 # This version of the bot uses the pawn code from version 20
 # Uses the most up to date spawning as of version 26
 
-DEBUG = 1
+DEBUG = 0
 
 
 def dlog(str):
